@@ -1,0 +1,532 @@
+﻿R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+1  2,Victor Wembanyama,C,SA,42,33.1,24.6,10.9,3.6,1.1,3.9,3.4,12.53
+2  1,Nikola Jokic,C,DEN,45,36.3,29.7,12.8,10.3,1.8,0.7,3.1,11.61
+3  1,Anthony Davis,"PF,C",DAL,42,34.3,25.7,11.9,3.4,1.3,2.1,2.2,9.5
+4  54,Giannis Antetokounmpo,"PF,C",MIL,41,34.9,31.8,12.2,5.9,0.8,1.3,3.4,8.48
+5  3,Shai Gilgeous-Alexander,"PG,SG",OKC,48,34.1,32.8,5.3,6,2,1,2.7,8.1
+6,Luka Doncic,"PG,SG",LAL,22,35.7,28.1,8.3,7.8,2,0.4,3.4,7.93
+7  18,Jalen Johnson,"SF,PF",ATL,36,35.7,18.9,10,5,1.6,1,2.9,6.46
+8  14,Chet Holmgren,"PF,C",OKC,10,26.5,16.4,8.7,2,0.8,2.6,2.3,6.2
+9  35,Dyson Daniels,"PG,SG,SF",ATL,46,33.8,13.8,5.4,3.8,3,0.8,1.9,6.18
+10  5,Karl-Anthony Towns,"PF,C",NY,46,34.7,24.3,13.6,3.3,1,0.8,2.5,6.09
+11  30,Scottie Barnes,"PG,SG,SF,PF",TOR,38,34.5,19.9,7.8,6.4,1.4,1,3,6.01
+12  4,Cade Cunningham,"PG,SG",DET,47,35.7,25.6,6.3,9.5,1,0.7,4.4,5.88
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+13  49,Alperen Sengün,C,HOU,47,31.4,19.2,10.6,5,1.3,0.8,2.4,5.75
+14  3,Jayson Tatum,"SF,PF",BOS,48,36.5,26.8,8.8,5.7,1.3,0.5,2.8,5.69
+15  91,Zion Williamson,"PF,C",NO,15,28.4,23.3,7.9,4.9,1.2,1.1,3.1,5.52
+16  6,Domantas Sabonis,C,SAC,47,36.1,20.6,14.3,6.4,0.6,0.4,3,5.48
+17  37,Dejounte Murray,"PG,SG",NO,31,32.6,17.5,6.5,7.4,2,0.4,3.4,5.46
+18  3,LeBron James,"SF,PF",LAL,45,34.6,24.1,7.6,9.1,0.9,0.5,3.8,5.44
+19  33,Walker Kessler,C,UTA,39,30,11,11.6,1.5,0.5,2.4,1.5,5.38
+20  8,James Harden,"PG,SG",LAC,47,33.8,21.3,5.7,8.4,1.5,0.6,4.5,5.28
+21  12,Tyrese Maxey,"PG,SG",PHI,43,38,27.9,3.4,6.2,1.9,0.4,2.4,5.19
+22  1,Jaren Jackson Jr.,"PF,C",MEM,49,29.6,23.4,6.1,2.2,1.3,1.6,2.2,5.06
+23  13,Jalen Williams,"SG,SF,PF,C",OKC,46,32.6,21,5.5,5.1,1.8,0.7,2.2,4.98
+24  45,Bam Adebayo,"PF,C",MIA,48,33.9,16.4,10,4.6,1.3,0.8,2.3,4.92
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+25  4,LaMelo Ball,"PG,SG",CHA,31,33.3,28.2,5.3,7.3,1.4,0.3,3.7,4.84
+26  42,Isaiah Hartenstein,C,OKC,29,29.3,11.3,12.1,4.3,0.8,1.2,1.9,4.8
+27  18,Jakob Poeltl,C,TOR,45,30.9,14.2,10.1,2.8,1.2,1.3,1.9,4.77
+28  1,Trae Young,PG,ATL,47,36.1,23.2,3.2,11.5,1.3,0.2,4.7,4.75
+29  3,Josh Hart,"SG,SF,PF",NY,50,37.6,14.3,9.7,5.8,1.5,0.4,1.9,4.74
+30  22,Kevin Durant,"SF,PF",PHO,39,36.2,26.9,6.1,4.2,0.8,1.3,3,4.58
+31  3,Tyrese Haliburton,"PG,SG",IND,48,34,17.9,3.6,8.5,1.3,0.7,1.8,4.58
+32  1,Evan Mobley,"PF,C",CLE,45,30,18.3,9,2.9,0.8,1.5,1.9,4.57
+33  1,De'Aaron Fox,PG,SA,46,37,25,5,6.3,1.5,0.4,2.9,4.42
+34  20,Joel Embiid,C,PHI,14,29.9,24.7,8.1,4.3,0.9,0.9,3.3,4.29
+35  30,Amen Thompson,"SG,SF,PF",HOU,47,31.3,13.7,8.1,3.1,1.4,1.2,2,4.24
+36  24,Ivica Zubac,C,LAC,48,31.9,15.1,12.6,2.5,0.7,1.1,1.7,4.21
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+37  16,Nikola Vucevic,"PF,C",CHI,51,32.2,19.5,10.4,3.5,0.9,0.7,1.6,4.03
+38  8,Kristaps Porzingis,"PF,C",BOS,26,28.6,19.2,7.1,2.1,0.8,1.6,1,4.03
+39  21,Anthony Edwards,"SG,SF",MIN,50,36.7,26.9,5.8,4.5,1.2,0.7,3.4,3.97
+40  16,Franz Wagner,"SF,PF",ORL,32,32.9,25.1,5.4,5.1,1.4,0.4,2.3,3.91
+41  34,Damian Lillard,PG,MIL,41,36.3,25.1,4.5,7.4,1.2,0.2,2.8,3.71
+42  35,Rudy Gobert,C,MIN,51,33.3,10.7,10.4,1.9,0.7,1.6,1.3,3.68
+43  5,Jamal Murray,"PG,SG",DEN,45,36,20.2,4,6.1,1.4,0.6,2.2,3.67
+44  6,Mark Williams,C,LAL,23,25,15.6,9.6,2.5,0.7,1.2,1,3.53
+45  28,Devin Booker,"PG,SG",PHO,45,36.9,26,4,6.6,1.1,0.3,2.7,3.27
+46  9,Myles Turner,C,IND,45,31.1,15.4,6.7,1.6,0.8,1.8,2,3.24
+47  10,Ja Morant,PG,MEM,30,28.4,20.7,4.2,7.5,1.3,0.3,3.9,3.14
+48  39,P.J. Washington,"SF,PF",DAL,42,32.9,14.4,8.3,2.3,1.2,1,1.9,3.11
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+49  36,Trey Murphy III,"SF,PF",NO,35,35.3,22.7,5,3.2,1.2,0.8,1.6,3.11
+50  31,Stephen Curry,"PG,SG",GS,41,31.8,22.4,4.4,6.2,1.1,0.5,2.9,3.1
+51  205,Paolo Banchero,"SF,PF",ORL,18,33.6,22.6,7.1,5,0.7,0.7,3.2,3.07
+52  14,Paul George,"SG,SF,PF",PHI,31,32,16.9,5.5,4.6,1.7,0.4,2.7,3.04
+53  31,Goga Bitadze,C,ORL,41,24,9.3,8.2,2.3,0.8,1.6,1.4,3.01
+54  34,Kyrie Irving,"PG,SG",DAL,40,36.1,24.5,4.8,4.8,1.2,0.4,2.3,2.99
+55  34,Josh Giddey,"PG,SG,SF",CHI,48,28.8,12.1,7.3,6.6,1.1,0.5,2.8,2.99
+56  30,Jaylen Brown,"SG,SF",BOS,44,35.4,23.1,6.1,4.8,1.2,0.3,2.6,2.97
+57  52,Russell Westbrook,"PG,SG",DEN,48,27.7,13,5.1,6.4,1.5,0.5,3,2.97
+58  11,Jarrett Allen,C,CLE,51,29,13.6,10.3,2,0.9,0.9,1.1,2.96
+59  25,John Collins,"PF,C",UTA,32,29.9,18.2,8.2,2.3,1,1,2.7,2.96
+60  63,Draymond Green,"PF,C",GS,36,28,8.3,6,5.6,1.1,1.1,2.5,2.9
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+61  21,Fred VanVleet,PG,HOU,45,35.5,14.6,3.9,5.8,1.6,0.4,1.6,2.8
+62  25,Donovan Mitchell,"PG,SG",CLE,48,31.2,23.8,4.4,4.7,1.4,0.2,2,2.73
+63  24,Jalen Brunson,PG,NY,50,35.3,26.1,2.9,7.5,1,0.1,2.4,2.71
+64  24,Desmond Bane,"SG,SF",MEM,40,30.1,17.9,5.7,5.5,1.2,0.4,2.5,2.69
+65  16,Derrick White,"PG,SG",BOS,48,33.8,16.2,4.2,4.2,0.9,1.2,1.6,2.66
+66  19,Dereck Lively II,C,DAL,32,24,9.1,7.8,2.6,0.5,1.7,1.2,2.61
+67  26,Tari Eason,"SF,PF",HOU,33,23.6,11.2,6.3,1.1,1.8,0.9,0.9,2.6
+68  3,Jalen Suggs,"PG,SG",ORL,35,28.6,16.2,4,3.7,1.5,0.9,2.9,2.56
+69  18,Brandon Ingram,"SG,SF,PF",TOR,18,33.1,22.2,5.6,5.2,0.9,0.6,3.8,2.56
+70  8,Deandre Ayton,C,POR,37,30.4,14.6,10.4,1.6,0.8,0.9,1.7,2.54
+71  18,Pascal Siakam,"SF,PF,C",IND,49,33.1,20.4,7.3,3.4,0.9,0.5,1.3,2.5
+72  11,Brandon Miller,"SG,SF,PF",CHA,27,34.2,21,4.9,3.6,1.1,0.8,2.8,2.47
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+73  78,Alexandre Sarr,"PF,C",WAS,41,26.8,11.5,6.6,2.2,0.7,1.6,1.4,2.43
+74  66,RJ Barrett,"SG,SF,PF",TOR,41,33.3,21.6,6.6,5.7,0.8,0.3,3,2.43
+75  8,Jalen Duren,C,DET,48,25.7,10.7,10,2.3,0.6,1.2,1.9,2.39
+76  28,Jordan Poole,"PG,SG",WAS,43,31,20.3,3.1,4.9,1.5,0.5,3.3,2.37
+77  5,Brook Lopez,C,MIL,48,32.1,12.1,4.7,1.7,0.7,1.9,1,2.33
+78  4,Chris Paul,PG,SA,48,29.1,9.4,4.1,8.2,1.3,0.2,1.6,2.25
+79  20,Malik Monk,"PG,SG,SF",SAC,42,31.9,18,3.7,5.8,1,0.6,2.1,2.22
+80  13,OG Anunoby,"SF,PF",NY,49,36.3,16.4,4.7,2,1.4,0.9,1.3,2.2
+81  76,Nicolas Claxton,C,BKN,44,26.4,9.9,7.4,2,0.9,1.3,1.2,2.19
+82  12,Jimmy Butler,"SF,PF",GS,25,30.6,17,5.2,4.8,1.1,0.4,1.2,2.15
+83  10,Miles Bridges,"SF,PF",CHA,34,31.9,19.4,7.7,3.9,0.6,0.6,2,2.15
+84  8,Daniel Gafford,"PF,C",DAL,48,21.8,12.7,6.7,1.4,0.4,1.8,1.2,2.09
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+85  52,Darius Garland,PG,CLE,49,30.3,21.8,2.5,6.8,1.1,0.2,2.5,1.99
+86  30,Austin Reaves,"PG,SG",LAL,43,34.6,18.4,4.3,6.1,1.1,0.2,2.4,1.86
+87  39,Bilal Coulibaly,"SG,SF",WAS,46,33.1,12.5,5,3.5,1.3,0.8,2.1,1.86
+88  7,Jaden McDaniels,"SF,PF",MIN,51,31.5,11,5.4,1.7,1.5,0.9,1.1,1.81
+89  25,Kelly Oubre Jr.,"SG,SF",PHI,47,34.5,14.3,6.4,1.9,1.5,0.5,1.3,1.79
+91  14,Herbert Jones,"SF,PF",NO,20,32.4,10.3,3.9,3.3,1.9,0.5,1.8,1.7
+92  57,Tyler Herro,"PG,SG",MIA,48,35.5,23.9,5.6,5.5,0.7,0.1,2.6,1.68
+93  29,DeMar DeRozan,"SF,PF",SAC,45,35.8,21.7,3.7,3.6,1.1,0.4,1.4,1.55
+94  58,Yves Missi,C,NO,48,27.2,8.8,8,1.4,0.6,1.4,1.2,1.53
+95  5,Deni Avdija,"SF,PF",POR,48,28.9,14.7,6.5,3.4,1,0.6,2.5,1.46
+96  53,Zach LaVine,"SG,SF",SAC,43,34,23.7,4.7,4.5,0.9,0.2,2.8,1.39
+97,Onyeka Okongwu,"PF,C",ATL,44,25,12.1,7.9,2,0.8,0.8,1,1.36
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+98  1,Tobias Harris,"SF,PF",DET,49,32,13,6,2.3,0.9,0.9,1.1,1.33
+99  8,Julius Randle,"PF,C",MIN,48,32.6,18.9,7.2,4.5,0.7,0.2,2.8,1.24
+100  48,Elfrid Payton,,NO,7,20.5,6.7,3.4,6.9,1.4,0.4,2.9,1.21
+101  3,Andrew Wiggins,"SF,PF",MIA,43,30.1,17.6,4.6,2.3,0.9,0.8,1.3,1.16
+102  1,CJ McCollum,"PG,SG",NO,38,33.4,22,3.6,3.8,0.8,0.5,1.7,1.15
+103  24,Jeremy Sochan,"SF,PF",SA,29,27.2,12,7.4,2.6,0.9,0.6,1.7,1.01
+104  68,Clint Capela,C,ATL,45,22.4,9.4,9,1.2,0.6,1,1,1.01
+105  25,Bradley Beal,"PG,SG,SF",PHO,37,32.4,17.4,3.4,3.4,1.1,0.6,2,1
+106  7,Keegan Murray,"SF,PF",SAC,47,35.1,12,7.1,1.4,0.8,0.9,0.9,0.98
+107  29,Cason Wallace,"PG,SG",OKC,46,27.4,7.3,3.5,2.4,1.8,0.6,0.7,0.96
+108  13,Toumani Camara,"SF,PF",POR,49,32.1,10.3,5.7,2,1.4,0.6,1.5,0.94
+109  2,Robert Williams III,C,POR,18,17.7,5.7,6,1.1,0.6,1.7,0.9,0.92
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+110,Bobby Portis,"PF,C",MIL,42,24.8,13.6,8.1,2,0.7,0.6,1.2,0.91
+111  69,Norman Powell,"SG,SF",LAC,41,33.2,24,3.6,2.2,1.3,0.2,2,0.9
+112  7,Devin Vassell,"SG,SF",SA,33,30.2,16.2,3.6,3.1,1.2,0.5,1.6,0.84
+113  12,Zach Edey,C,MEM,37,20.9,9.9,7.8,1,0.6,1.2,1.5,0.84
+114  29,Ben Simmons,"PG,C",BKN,33,25,6.2,5.2,6.9,0.8,0.5,2.7,0.82
+115  64,Jusuf Nurkic,C,PHO,25,23.7,8.6,9.2,1.9,0.9,0.6,2.3,0.69
+116  41,Michael Porter Jr.,"SF,PF",DEN,51,33.3,18.7,6.5,2.2,0.6,0.5,1.3,0.64
+117  130,Isaiah Jackson,"PF,C",IND,5,16.8,7,5.6,1,0.6,1.6,1,0.64
+118  28,Mikal Bridges,"SG,SF,PF",NY,51,38.3,18.2,3.1,3.3,1,0.5,1.6,0.6
+119  11,Grant Williams,"PF,C",CHA,16,29.9,10.4,5.1,2.3,1.1,0.8,1.8,0.6
+120  132,Jonathan Kuminga,"SF,PF",GS,32,26,16.8,5,2.2,0.9,0.6,1.6,0.58
+121  4,Santi Aldama,"PF,C",MEM,43,24.6,12.7,6.7,2.5,0.8,0.5,1.1,0.5
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+122  43,Christian Braun,"SG,SF",DEN,50,32.6,14.6,4.9,2,1.1,0.5,1,0.5
+123  24,Lonzo Ball,PG,CHI,30,21.6,7.2,3.4,3.5,1.5,0.5,1.2,0.44
+124  78,Cameron Johnson,"SF,PF",BKN,36,32.1,19.3,4,2.9,0.8,0.5,1.7,0.44
+125  31,Naz Reid,"PF,C",MIN,50,25.8,14,5.1,1.9,0.8,0.8,1.2,0.42
+126  11,Jaden Ivey,"PG,SG",DET,30,29.9,17.6,4.1,4,0.9,0.4,3,0.42
+127  5,D'Angelo Russell,PG,BKN,42,25.7,12.9,2.8,5.2,1,0.4,1.9,0.39
+128  14,Keyonte George,"PG,SG",UTA,39,31.3,16.4,3.6,5.8,0.8,0.2,2.8,0.36
+129  37,Jalen Green,"PG,SG",HOU,50,33.1,21.3,4.3,2.9,0.9,0.3,2.6,0.33
+130  18,Ayo Dosunmu,"PG,SG,SF",CHI,41,30.7,12.4,3.6,4.7,0.9,0.4,1.3,0.32
+131  15,Scoot Henderson,PG,POR,44,26.6,12.7,3.1,5.3,1.1,0.3,2.6,0.31
+132  44,Lauri Markkanen,"SF,PF",UTA,37,31.9,19.3,6.2,1.7,0.7,0.4,1.4,0.3
+133  43,Scotty Pippen Jr.,"PG,SG",MEM,51,21.2,9.6,3.4,4.6,1.2,0.4,1.8,0.3
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+134  53,Coby White,"PG,SG",CHI,45,32.6,18.5,3.3,4.6,0.9,0.2,2.4,0.25
+135  74,Ausar Thompson,"SF,PF",DET,29,20.4,8.4,4.9,1.7,1.6,0.4,1.3,0.22
+136  3,Jerami Grant,"SF,PF",POR,39,32.2,14.8,3.3,2.2,0.7,1,1.3,0.21
+137  19,Andrew Nembhard,"PG,SG",IND,33,28.4,11.1,3.5,5.2,1.2,0.1,1.8,0.16
+138  64,Wendell Carter Jr.,"PF,C",ORL,39,25.6,8.6,7.3,2.4,0.8,0.5,0.9,0.14
+139  6,Kawhi Leonard,"SG,SF,PF",LAC,12,24.3,15.9,4.6,2.4,0.9,0.5,1.7,0.13
+140  22,Jrue Holiday,"PG,SG",BOS,44,30.2,11,4.4,3.7,1,0.4,1.3,0.12
+141  7,Dennis Schröder,"PG,SG",UTA,47,29.8,14.4,2.6,5.5,1.1,0.1,2.3,0.08
+142  61,Nick Richards,C,PHO,31,22,8.9,8.3,1.1,0.3,1.1,1.7,-0.02
+143  12,Luguentz Dort,"SG,SF",OKC,47,29,9.8,4.3,1.7,1.1,0.7,0.7,-0.04
+144  43,Cody Martin,"SG,SF",CHA,39,24.8,7.8,4.5,2.3,1.1,0.7,1.1,-0.05
+145  28,Peyton Watson,"SF,PF",DEN,48,24.2,8.1,3.4,1.5,0.9,1.2,0.9,-0.06
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+146  48,Alex Caruso,"SG,SF",OKC,29,19,5.4,2.7,2.4,1.7,0.5,0.7,-0.09
+147  36,Jonas Valanciunas,C,SAC,49,20.1,11.5,8.2,2.2,0.4,0.6,1.8,-0.09
+148  85,Cam Thomas,"SG,SF",BKN,19,32.3,24.7,3.6,3.4,0.7,0.1,2.7,-0.13
+149  21,Jabari Smith Jr.,"PF,C",HOU,33,30.9,11.9,6.5,1,0.4,1,0.9,-0.13
+150  47,Anfernee Simons,"PG,SG",POR,47,32.2,18.2,2.8,5,0.8,0.1,2.1,-0.15
+151  12,T.J. McConnell,PG,IND,48,18.7,9.9,2.6,4.5,1.2,0.3,1.5,-0.18
+152  17,Jordan Clarkson,"SG,SF",UTA,27,25.9,16.6,3.2,3.8,0.9,0.3,2.2,-0.2
+153  35,Donovan Clingan,C,POR,37,16,5.1,6.4,0.7,0.4,1.5,1.2,-0.22
+154  84,Caleb Martin,"SG,SF",DAL,31,30.4,9.1,4.4,2.3,1.1,0.6,1.4,-0.22
+155  12,Isaiah Stewart,"PF,C",DET,46,20.2,5.6,5.8,1.7,0.4,1.3,0.9,-0.24
+156  40,Precious Achiuwa,"PF,C",NY,30,20.5,6.5,5.8,1,1,0.8,0.8,-0.31
+157  2,Jose Alvarado,PG,NO,27,22.2,9.6,2,4.1,1.3,0.3,1.1,-0.33
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+158  19,Royce O'Neale,"SF,PF",PHO,44,25.2,9.4,5.1,2.1,1,0.5,1,-0.35
+159  39,Rui Hachimura,"SF,PF",LAL,41,31.9,12.8,5.1,1.5,0.9,0.5,0.9,-0.37
+160  11,Donte DiVincenzo,"PG,SG,SF",MIN,40,26.4,11,3.7,3.6,1.2,0.2,1.8,-0.38
+161  60,Jarred Vanderbilt,PF,LAL,5,14.7,3.2,5.4,1.2,2,0,0.4,-0.41
+162  75,Jonathan Isaac,"SF,PF",ORL,46,16.6,6,4.8,0.5,0.8,1.2,0.4,-0.42
+163  31,Keon Ellis,"SG,SF",SAC,48,21.8,7.7,2.4,1.3,1.4,0.8,0.8,-0.43
+164  2,Al Horford,"PF,C",BOS,39,26.3,8,5.3,1.9,0.6,0.9,0.7,-0.43
+165  3,Mike Conley,PG,MIN,46,25,8.1,2.7,4.6,1.2,0.2,1.1,-0.47
+166  51,Immanuel Quickley,"PG,SG",TOR,12,25.8,15,2.1,5.7,0.6,0.2,1.4,-0.53
+167  38,Tyus Jones,PG,PHO,49,29.3,10.9,2.3,5.8,0.9,0.1,1.3,-0.54
+168  70,Payton Pritchard,"PG,SG",BOS,50,27.6,13.7,3.6,3.4,0.9,0.2,1,-0.56
+169  17,Caris LeVert,"SG,SF",CLE,38,23.8,10.2,2.8,3.7,0.9,0.5,1.3,-0.61
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+170  43,Kris Dunn,"PG,SG",LAC,43,22.5,5.9,3.3,2.7,1.5,0.3,1.1,-0.65
+171  2,Kentavious Caldwell-Pope,"SG,SF",ORL,49,30.5,9,2,1.8,1.5,0.5,0.9,-0.66
+172  28,Guerschon Yabusele,"PF,C",PHI,48,26.8,11.1,5.7,2,0.8,0.4,1.3,-0.69
+173  35,Bennedict Mathurin,"SG,SF",IND,47,31.7,16.2,5.7,1.8,0.6,0.4,2,-0.69
+174  6,Brandin Podziemski,SG,GS,37,24.4,9.4,4.5,3.3,1,0.2,1.1,-0.7
+175  53,Trayce Jackson-Davis,"PF,C",GS,46,19.5,8,6.2,2.1,0.5,0.7,0.8,-0.7
+176  105,Andre Drummond,C,PHI,28,19.2,7.1,7.6,0.6,1.1,0.4,1.7,-0.71
+177  19,Kel'el Ware,"PF,C",MIA,34,18.1,8.4,5.5,0.6,0.6,1,0.7,-0.75
+178  62,Khris Middleton,SF,WAS,23,23.2,12.6,3.7,4.4,0.7,0.2,1.6,-0.77
+179  19,Day'Ron Sharpe,C,BKN,29,17.4,8,6,1.5,0.8,0.6,1.2,-0.78
+180  39,Jaime Jaquez Jr.,"SG,SF",MIA,44,23.2,9.4,4.8,2.7,1.1,0.2,1.5,-0.79
+181  27,De'Anthony Melton,"PG,SG",BKN,6,20.2,10.3,3.3,2.8,1.2,0.3,1.7,-0.79
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+182  92,Kevon Looney,"PF,C",GS,44,16.5,5.2,7,1.9,0.8,0.4,0.6,-0.89
+183  42,Nikola Jovic,"PF,C",MIA,40,24.8,11.1,4,2.9,0.9,0.3,1.3,-0.9
+184  88,Collin Sexton,"PG,SG",UTA,46,28.5,18.3,2.9,4.1,0.7,0.1,2.5,-0.91
+185  41,Patrick Williams,PF,CHI,42,26.7,9.4,4.2,2.2,0.8,0.6,1.4,-0.98
+186  28,Marcus Smart,"PG,SG",MEM,19,21.1,8.7,2.3,3.7,1.2,0.3,1.8,-0.98
+187  23,Shaedon Sharpe,"SG,SF",POR,43,30.4,17.2,3.8,2.4,0.8,0.2,1.9,-0.98
+188  71,Anthony Black,"PG,SG",ORL,48,24.7,8.9,2.6,3.4,1,0.5,1.9,-0.99
+189  36,Ochai Agbaji,"SG,SF",TOR,45,27.8,10.4,3.6,1.6,0.9,0.6,0.8,-0.99
+190  31,Larry Nance Jr.,"PF,C",ATL,21,19.1,8.1,4.4,1.5,0.9,0.6,0.6,-1
+191  6,Jaylin Williams,"PF,C",OKC,22,17.1,6,5.6,2.4,0.5,0.7,0.7,-1.04
+192  135,Kyle Kuzma,PF,MIL,32,27.7,15.2,5.8,2.4,0.6,0.2,2.3,-1.04
+193  10,Brandon Clarke,"PF,C",MEM,47,18.8,7.9,5,1,0.9,0.6,0.6,-1.06
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+194  16,Ziaire Williams,"SG,SF",BKN,37,23.4,9.4,4.7,1.4,1,0.4,1,-1.12
+195  34,Dean Wade,"SF,PF",CLE,35,22.8,6,5.1,1.6,0.9,0.5,0.3,-1.13
+196  19,Moritz Wagner,C,ORL,30,18.8,12.9,4.9,1.4,0.8,0.4,1.6,-1.14
+197  31,Derrick Jones Jr.,"SF,PF",LAC,48,25.1,10.4,3.7,0.9,1.2,0.4,0.9,-1.16
+198  6,Justin Champagnie,"SG,SF",WAS,32,18.8,7.8,4.5,0.9,1,0.6,0.8,-1.16
+199  19,Jake LaRavia,"SF,PF",MEM,47,20.9,7.3,4.4,2.8,0.9,0.4,1.5,-1.17
+200  7,Brandon Boston Jr.,"SG,SF,PF",NO,41,23.8,10.7,3.2,2.2,1.2,0.2,1.2,-1.19
+201  91,Stephon Castle,"PG,SG",SA,47,25.5,12.2,2.8,3.7,0.8,0.3,2,-1.21
+202  24,Malcolm Brogdon,"PG,SG",WAS,21,24.1,13.1,4,4,0.5,0.2,1.6,-1.24
+203  57,Moussa Diabate,C,CHA,41,18.7,4.6,6.9,0.7,0.7,0.7,0.9,-1.24
+204  23,Dru Smith,"PG,SG",MIA,14,19.2,6.3,2.6,1.6,1.5,0.4,1.2,-1.24
+205  75,Ty Jerome,"PG,SG",CLE,48,18.9,11.3,2.4,3.4,1.2,0,1.2,-1.26
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+206  52,Klay Thompson,"SG,SF",DAL,44,27.2,13.4,3.5,2,0.8,0.4,1.5,-1.28
+207  23,Max Strus,"SG,SF",CLE,23,24.5,8.1,4.3,3,0.7,0.4,1,-1.28
+208  106,De'Andre Hunter,"SF,PF",ATL,37,28.7,19,3.9,1.5,0.8,0.1,1.6,-1.3
+209  54,Mason Plumlee,C,PHO,49,17.5,4,6.4,1.9,0.4,0.8,0.9,-1.32
+210  4,Terry Rozier,PG,MIA,45,28.5,12.3,4.2,2.9,0.6,0.3,1.4,-1.34
+211  91,Kevin Porter Jr.,PG,LAC,45,19.6,9.3,3.6,3.2,1,0.2,1.9,-1.35
+212  36,Kyshawn George,"SG,SF",WAS,45,25.5,7.7,3.8,2.2,0.8,0.6,1.3,-1.35
+213  9,Luke Kornet,C,BOS,45,16.8,5.1,4.9,1.5,0.5,0.9,0.4,-1.36
+214  15,Spencer Dinwiddie,"PG,SG",DAL,49,25,10.1,2.4,3.8,0.9,0.2,1.1,-1.38
+215  45,Julian Champagnie,"SF,PF",SA,48,25.3,10.4,4.2,1.2,0.8,0.5,1,-1.48
+216  14,Bub Carrington,"PG,SG",WAS,50,28.9,8.5,3.9,3.9,0.7,0.2,1.4,-1.5
+217  14,Josh Okogie,"SG,SF",CHA,32,15.6,6.9,3,0.8,1.3,0.5,0.8,-1.51
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+218  14,Javonte Green,,NO,46,22.1,5.9,3.6,0.9,1.1,0.6,0.6,-1.51
+219  48,Aaron Gordon,"PF,C",DEN,29,26.8,12.4,4.8,2.9,0.5,0.2,1.3,-1.52
+220  45,Naji Marshall,"SG,SF",DAL,38,24.3,10.9,3.6,2.6,1,0.1,1.4,-1.52
+221  61,Gradey Dick,"SG,SF",TOR,44,29.9,15.6,3.3,2,0.8,0.2,1.6,-1.54
+222  72,Grayson Allen,"PG,SG,SF",PHO,41,24.8,10.8,3.4,2,0.9,0.3,1,-1.57
+223  88,Isaiah Collier,PG,UTA,41,22.7,6.2,2.9,5.3,0.8,0.2,2.7,-1.64
+224  53,Zaccharie Risacher,SF,ATL,44,23.9,11.2,3.5,1.2,0.8,0.5,1.1,-1.67
+225  34,Dorian Finney-Smith,"SF,PF,C",LAL,34,26.9,8.9,3.9,1.3,0.9,0.4,0.8,-1.72
+226  33,Dillon Brooks,"SG,SF,PF",HOU,47,32.3,13.6,3.8,1.5,0.8,0.2,1.1,-1.75
+227  37,Buddy Hield,"SG,SF",GS,50,23.2,11.7,3.2,1.6,0.9,0.3,1.2,-1.78
+228  38,Keon Johnson,"PG,SG",BKN,49,23.1,10,3.4,1.9,0.9,0.3,1.2,-1.79
+230  56,Malik Beasley,"SG,SF",DET,51,27.7,16,2.9,1.8,0.9,0,1.1,-1.85
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+231  31,Jalen Smith,"PF,C",CHI,47,15.3,8.4,5.6,0.9,0.3,0.7,0.6,-1.89
+232  43,Tre Mann,"PG,SG",CHA,13,24.5,14.1,2.9,3,0.5,0.3,1.9,-1.9
+233  13,Haywood Highsmith,"SF,PF",MIA,47,24,6.5,3.1,1.2,0.9,0.6,0.7,-1.94
+234  36,Kyle Anderson,"SF,PF",TOR,36,15,5.3,3.1,2.3,0.7,0.6,0.6,-1.95
+235  18,Miles McBride,"PG,SG",NY,41,23.3,9.1,2.4,2.7,0.9,0.2,0.7,-1.99
+236  4,Keldon Johnson,"SG,SF,PF",SA,45,23.8,12.1,4.7,1.4,0.6,0.2,0.8,-2.02
+237  3,Jaxson Hayes,"PF,C",LAL,27,17.1,5.3,4.1,0.9,0.5,0.9,0.7,-2.05
+238  53,Chris Boucher,"PF,C",TOR,43,17.4,10.5,4.3,0.6,0.5,0.6,0.6,-2.05
+239  57,Obi Toppin,PF,IND,46,18.8,9.8,4,1.5,0.6,0.4,0.7,-2.08
+240  75,Luke Kennard,SG,MEM,38,22.2,9.7,2.9,3.4,0.7,0.1,1.1,-2.13
+241  28,Tosan Evbuomwan,,BKN,17,24.9,10.3,4.2,1.6,0.7,0.3,1.8,-2.21
+242  30,Quentin Grimes,"SG,SF",PHI,47,22.8,10.2,3.8,2.1,0.7,0.2,1.3,-2.21
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+243  1,Bruce Brown,"SG,SF",NO,18,19.6,8.4,3.8,1.6,0.9,0.2,1.1,-2.24
+244  6,Vít Krejcí,"SG,SF",ATL,36,20.3,6.6,2.4,2.5,0.7,0.5,0.9,-2.25
+245  17,Trey Lyles,"PF,C",SAC,40,19.8,6.6,4.7,1,0.6,0.5,0.6,-2.27
+246  26,Kyle Lowry,PG,PHI,31,19.4,4.2,2,2.9,1,0.3,0.6,-2.27
+247  7,Bogdan Bogdanovic,"SG,SF",ATL,24,24.9,10,2.8,2,0.8,0.3,1.5,-2.29
+248  7,Josh Green,"SG,SF",CHA,45,28.6,7.5,2.8,1.5,1.1,0.2,0.9,-2.31
+249  88,Jared McCain,"PG,SG",PHI,23,25.7,15.3,2.4,2.6,0.7,0,1.6,-2.31
+250  4,Paul Reed,"PF,C",DET,28,9.9,4.4,2.5,1,1.1,0.5,0.5,-2.32
+251  10,Kevin Huerter,"SG,SF",CHI,43,20.9,7.9,2.8,1.7,0.8,0.4,0.9,-2.34
+252  37,Max Christie,"SG,SF",DAL,47,25.2,8.6,2.8,1.5,0.8,0.4,0.9,-2.34
+253  23,Davion Mitchell,"PG,SG",TOR,44,24.6,6.3,1.9,4.6,0.7,0.2,1.8,-2.35
+254  28,Jarace Walker,PF,IND,48,16.7,6.2,3.2,1.5,0.9,0.4,1.1,-2.37
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+255  19,Kelly Olynyk,C,NO,24,16,7.1,3.7,2.3,0.7,0.3,1.4,-2.39
+256  15,Cole Anthony,PG,ORL,47,17.1,9.2,2.9,2.8,0.6,0.3,1.6,-2.41
+257  29,Drew Eubanks,C,LAC,38,15.1,5.7,4.4,1.2,0.3,0.8,0.8,-2.42
+258  31,Mo Bamba,C,UTA,28,12.6,4.6,4.3,0.6,0.3,1,0.7,-2.44
+259  54,Aaron Wiggins,"SG,SF",OKC,49,21.4,10.2,3.6,1.6,0.7,0.2,0.9,-2.44
+260  31,Charles Bassey,C,SA,32,10.8,4.6,4.6,0.4,0.4,0.9,0.7,-2.44
+261  52,Dalano Banton,"SG,SF",POR,39,15.3,8.5,1.9,2.1,0.7,0.5,1.2,-2.47
+263  42,Jonathan Mogbo,"PF,C",TOR,38,16.6,5.2,4.2,1.5,0.7,0.4,0.8,-2.48
+265  70,Harrison Barnes,"SF,PF",SA,48,27.9,11.7,4,1.8,0.4,0.2,0.6,-2.53
+266  22,Nickeil Alexander-Walker,"SG,SF",MIN,51,23.7,8.7,2.9,2.4,0.6,0.3,1.2,-2.58
+267  45,Taurean Prince,"SG,SF",MIL,49,25.6,7.6,3.7,2,0.8,0.1,1,-2.61
+268  17,Jordan Hawkins,SG,NO,33,23.2,10.9,2.5,1,0.7,0.4,0.9,-2.61
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+269  16,Noah Clowney,"SF,PF,C",BKN,37,23,9.4,3.9,0.8,0.5,0.5,1,-2.62
+270  33,Ryan Dunn,"SF,PF",PHO,45,19.3,6.8,3.5,0.9,0.5,0.6,0.4,-2.69
+271  12,Daniel Theis,C,OKC,38,16.3,4.3,4.3,1.6,0.5,0.5,0.7,-2.7
+272  14,Keaton Wallace,,ATL,23,17.3,5.9,1.5,2.3,1,0.3,1.2,-2.71
+273  83,Mouhamed Gueye,"PF,C",ATL,5,13.6,5,3,0.4,1,0.4,0.2,-2.73
+274  63,Corey Kispert,"SG,SF",WAS,45,26.7,11.5,3,1.6,0.6,0.2,1,-2.73
+275  42,Kenyon Martin Jr.,"SF,PF",PHI,24,20,6.4,3,0.8,0.5,0.7,0.5,-2.79
+276  31,Svi Mykhailiuk,"SG,SF",UTA,19,19.1,10,2.4,1.8,0.7,0.3,1.6,-2.8
+277  36,Thomas Bryant,C,IND,33,13.7,6.1,3.6,0.8,0.5,0.6,0.4,-2.81
+278  22,Terance Mann,"SG,SF",LAC,37,19.8,6,2.9,1.6,0.8,0.3,0.7,-2.81
+279  12,Justin Edwards,SF,PHI,21,23.6,8,3.1,1.4,0.7,0.3,0.9,-2.82
+280  15,Tristan Da Silva,SF,ORL,48,25.7,8.6,4,1.8,0.5,0.2,0.9,-2.85
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+281  54,Jaylen Wells,SF,MEM,51,26.1,11.3,3.2,1.7,0.6,0.1,1,-2.87
+282  15,Cam Whitmore,"SF,PF",HOU,31,16.9,9.7,3.2,0.8,0.7,0.3,1.1,-2.91
+283  60,Jay Huff,C,MEM,44,12.9,7.8,2.2,0.7,0.3,0.9,0.6,-2.95
+284  26,Tre Jones,PG,CHI,28,16.1,4.4,2.1,3.7,0.6,0.2,0.8,-2.96
+285  35,Trevelin Queen,SG,ORL,22,15.4,4.8,1.6,1.4,1,0.4,0.9,-2.98
+286  70,Aaron Nesmith,"SF,PF",IND,14,21,8.5,3.4,1.1,0.6,0.3,0.8,-2.98
+287  62,Gary Trent Jr.,"PG,SG,SF",MIL,44,24.6,9.7,2.4,1,0.9,0.1,0.6,-3.01
+288  64,Duncan Robinson,"SG,SF",MIA,47,24.1,10.9,2.4,2.6,0.5,0.1,1.1,-3.02
+289  32,Julian Strawther,SG,DEN,51,21.8,9.4,2.1,1.3,0.7,0.3,0.8,-3.04
+290  8,Isaac Okoro,"SF,PF",CLE,28,19.7,5.8,2.1,1.6,0.7,0.4,0.4,-3.05
+291  2,Jeremiah Robinson-Earl,"PF,C",NO,42,17.9,5.5,4.7,1.2,0.7,0.1,0.7,-3.08
+292  12,GG Jackson II,"SF,PF",MEM,9,17.6,9.9,3.9,0.9,0.6,0.2,1.4,-3.1
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+293  21,Karlo Matkovic,PF,NO,13,11.3,2.5,3.4,0.7,0.5,0.8,0.8,-3.11
+294  7,Matas Buzelis,"SF,PF",CHI,50,14.2,6,2.8,0.4,0.3,0.9,0.6,-3.14
+295  56,Isaiah Joe,"PG,SG",OKC,45,21,9.7,2.5,1.4,0.7,0.1,0.4,-3.14
+296  3,Jalen Wilson,"SF,PF",BKN,50,27.6,9.5,3.5,1.9,0.6,0,1.1,-3.17
+297  96,Steven Adams,C,HOU,35,12.6,3.8,5.2,1.1,0.3,0.5,0.9,-3.18
+298  20,DaQuan Jeffries,SG,CHA,17,17.4,5.5,2.8,0.9,0.7,0.4,0.5,-3.22
+299  11,Neemias Queta,C,BOS,39,14.6,5.1,3.7,0.7,0.3,0.7,0.6,-3.23
+300  57,Sam Hauser,"SF,PF",BOS,42,19.9,7.5,3,1,0.7,0.2,0.4,-3.24
+301  16,Tyrese Martin,,BKN,33,21.2,8.2,3.9,1.8,0.4,0.2,1.2,-3.26
+302  31,Kyle Filipowski,"PF,C",UTA,39,18,6,4.6,1.8,0.5,0.1,1,-3.26
+303  37,Ja'Kobe Walter,SG,TOR,32,19.2,7.6,2.4,1.5,0.7,0.2,0.8,-3.31
+304  17,Trendon Watford,"PF,C",BKN,15,17.4,8.5,3.2,1.3,0.5,0.3,1.4,-3.35
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+305  80,KJ Simpson,PG,CHA,18,17.9,5.9,2.2,2.2,0.7,0.2,1.1,-3.36
+306  71,Delon Wright,"PG,SG",MIL,26,15.6,2.5,1.8,1.8,0.9,0.3,0.5,-3.37
+307  32,Cameron Payne,"PG,SG",NY,45,14.3,7.2,1.4,2.5,0.6,0.2,0.6,-3.4
+308  10,Nicolas Batum,"SF,PF",LAC,48,17.6,3.4,2.9,1.4,0.6,0.4,0.4,-3.41
+309  36,Kevin Love,"PF,C",MIA,19,10.9,5.5,4.1,1,0.7,0.1,0.7,-3.42
+310  65,Elijah Harkless,,UTA,9,15,3.6,2.3,0.9,1.1,0.1,0.3,-3.46
+311  2,Ben Sheppard,"SG,SF",IND,35,20.5,5.6,2.6,1.3,0.6,0.3,0.3,-3.47
+312  3,Gary Payton II,"SG,SF",GS,39,13.7,5.3,3,1.3,0.6,0.3,0.7,-3.47
+313  17,Eric Gordon,"SG,SF",PHI,37,20.2,7.2,1.2,1.7,0.7,0.3,0.7,-3.47
+314  11,John Konchar,"SG,SF",MEM,27,13.7,2.7,3.9,1.1,0.5,0.4,0.4,-3.5
+315  29,Cam Reddish,"SG,SF",CHA,31,18.1,3.3,2,0.7,1,0.3,0.4,-3.5
+316  49,Tidjane Salaun,PF,CHA,35,18.5,4.8,4.1,1.1,0.6,0.2,0.9,-3.51
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+317  11,Andre Jackson Jr.,"SG,SF",MIL,47,17.5,4,3.3,1.5,0.6,0.3,1,-3.53
+318  39,Garrison Mathews,"SG,SF",ATL,42,18,7.7,1.9,1.3,0.6,0.3,0.7,-3.56
+319  32,Bones Hyland,"PG,SG",LAC,20,11.1,7.2,1.2,1.4,0.9,0.2,1.2,-3.57
+320  85,Amir Coffey,"SF,PF",LAC,49,26,10.1,2.4,1.1,0.6,0.1,0.7,-3.59
+321  48,Quinten Post,C,GS,12,14.4,7.2,3.5,1.8,0.2,0.3,0.6,-3.59
+322  30,DeAndre Jordan,C,DEN,36,11.7,3.4,4.5,0.8,0.3,0.5,0.7,-3.61
+323  16,Moses Moody,"SG,SF",GS,42,18.2,9,2.1,1.1,0.5,0.3,0.7,-3.62
+324  7,Lindy Waters III,"SG,SF",GS,38,17.2,5.5,2.6,1.1,0.6,0.3,0.4,-3.62
+325  85,Jaylen Nowell,SG,NO,8,21,8.4,2.5,2.3,0.1,0.4,1,-3.65
+326  46,Sam Merrill,SG,CLE,43,18.9,7.1,1.9,1.6,0.6,0.2,0.5,-3.67
+327  33,Kenrich Williams,PF,OKC,38,14.4,5.7,3.3,1,0.7,0.1,0.6,-3.68
+328  1,Jamal Shead,PG,TOR,45,17,5.8,1.1,3.5,0.6,0.1,1.5,-3.69
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+329  78,Brice Sensabaugh,"SF,PF",UTA,39,17.9,9.4,2.6,1.3,0.6,0.1,1.4,-3.71
+330  24,Oso Ighodaro,C,PHO,40,15,3.6,3.3,1,0.5,0.4,0.6,-3.72
+331  15,Richaun Holmes,C,WAS,13,12.6,4.3,4.1,0.9,0.2,0.5,0.4,-3.72
+333  10,Ryan Rollins,PG,MIL,33,12.2,5,1.5,1.2,0.7,0.4,0.9,-3.76
+334  39,Ajay Mitchell,PG,OKC,34,16.5,6.5,2,1.7,0.7,0.1,0.8,-3.76
+335  9,Quenton Jackson,,IND,18,14.1,5.7,1.5,1.7,0.6,0.3,0.6,-3.77
+336  12,Zach Collins,"PF,C",CHI,36,11.8,4.6,2.8,1.4,0.4,0.4,0.6,-3.78
+337  16,Vasilije Micic,"PG,SG",CHA,36,21.2,7.5,2.4,3.5,0.4,0,2.1,-3.79
+338  22,Josh Richardson,"PG,SG",MIA,8,18.7,4,1.5,1.5,1,0.1,1,-3.82
+339  27,Marcus Sasser,PG,DET,40,13.9,5.8,1.3,2.3,0.7,0.1,0.9,-3.85
+340  72,Georges Niang,"SF,PF",CLE,51,20.7,8.7,3.7,1.3,0.3,0.1,0.9,-3.9
+341  57,Tim Hardaway Jr.,"SG,SF",DET,47,28.6,11,2.2,1.6,0.4,0,0.7,-3.95
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+342  10,Jared Butler,"PG,SG",WAS,32,11.3,6.9,1.3,2.6,0.4,0.2,0.9,-3.96
+343  24,Alec Burks,"SG,SF",MIA,26,16.1,5.7,2.1,1.1,0.6,0.2,0.3,-4
+344  5,Ricky Council IV,"SG,SF",PHI,42,15.2,6.7,2.5,1.1,0.5,0.2,0.6,-4
+345  66,Cody Williams,SF,UTA,26,21,3.9,2.2,1.3,0.5,0.4,0.8,-4.01
+346  82,AJ Green,"PG,SG",MIL,42,21.9,7.8,2.3,1.3,0.5,0.1,0.6,-4.05
+347  42,Dario Saric,"PF,C",DEN,13,14.7,3.8,3.6,1.7,0.5,0.1,1.1,-4.05
+348  9,Maxi Kleber,"PF,C",LAL,34,18.7,3,2.8,1.3,0.3,0.5,0.7,-4.08
+349  43,Johnny Juzang,"SG,SF",UTA,33,17.6,7.2,2.7,1,0.4,0.2,0.5,-4.1
+350  60,Dalton Knecht,"SG,SF",CHA,48,20.7,9.4,3.1,0.9,0.3,0.1,0.5,-4.13
+351  5,Gabe Vincent,"PG,SG",LAL,41,20.1,5.1,1.3,1.3,0.7,0.2,0.6,-4.16
+352  15,Nick Smith Jr.,"PG,SG",CHA,30,17.7,7.5,1.9,1.6,0.4,0.2,0.9,-4.17
+353  18,Reed Sheppard,SG,HOU,35,11.7,3.6,1.4,1.1,0.6,0.4,0.6,-4.19
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+354  12,Jamal Cain,"SF,PF",NO,20,12.6,3.7,2.5,0.6,0.5,0.4,0.5,-4.2
+355  14,Ron Holland II,SF,DET,51,15.5,6.4,2.7,0.8,0.6,0.1,0.9,-4.23
+357  21,Micah Potter,"PF,C",UTA,21,17.6,3.8,3.9,0.7,0.2,0.4,0.6,-4.27
+358  24,David Roddy,"SF,PF",ATL,27,12.8,4.5,2.6,1.1,0.4,0.3,0.7,-4.3
+359  29,Shake Milton,"PG,SG",LAL,38,16.3,6.3,1.8,2.1,0.4,0.1,0.7,-4.3
+360  9,Bruno Fernando,C,TOR,17,8.6,3.4,3,1.1,0.2,0.5,0.8,-4.3
+361  25,Taj Gibson,"PF,C",CHA,20,10.8,2.4,3.4,0.6,0.3,0.5,0.7,-4.3
+362,Adem Bona,C,PHI,35,11,3,2.9,0.3,0.2,0.7,0.7,-4.31
+363  94,Trey Jemison,C,LAL,21,9.9,2.1,2.9,0.5,0.4,0.5,0.6,-4.34
+364  22,Simone Fontecchio,"SF,PF",DET,46,17.6,6.3,2.8,0.8,0.4,0.2,0.8,-4.38
+365  22,Jaden Hardy,"PG,SG",DAL,39,15.6,8.4,1.6,1.4,0.5,0.1,1.5,-4.45
+366  3,Patty Mills,"PG,SG",LAC,18,14.8,4.1,1.2,1.2,0.7,0.2,0.8,-4.46
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+367  37,Kobe Bufkin,"PG,SG",ATL,10,12.4,5.3,2.1,1.7,0.3,0.2,0.8,-4.55
+368  21,Wendell Moore Jr.,"SG,SF",DET,20,10.9,3.2,2.2,1.2,0.5,0.2,0.5,-4.55
+369  11,Pat Connaughton,"SG,SF",MIL,29,15.3,4.4,2.8,1.7,0.1,0.3,0.6,-4.55
+370  4,Ousmane Dieng,"SF,PF",OKC,29,11.4,3.9,2.3,0.9,0.5,0.2,0.5,-4.57
+371  16,Talen Horton-Tucker,"PG,SG",CHI,40,11.5,5.9,1.7,1.3,0.4,0.2,0.7,-4.58
+372  1,Jordan Miller,SF,LAC,29,12.8,4.9,1.8,1.1,0.5,0.2,0.8,-4.6
+373  39,Devin Carter,PG,SAC,15,10,3.9,2.6,1.4,0.3,0.2,0.5,-4.63
+374  4,Dwight Powell,C,DAL,33,7.6,1.5,1.8,0.7,0.4,0.5,0.2,-4.64
+375  7,Jae'Sean Tate,"SF,PF",HOU,31,11.4,4,2.1,0.8,0.6,0.1,0.4,-4.67
+376  45,Isaiah Wong,SG,CHA,18,12.5,5.3,1.7,1.4,0.6,0,0.8,-4.67
+377  3,Marvin Bagley III,"PF,C",WAS,19,8.8,4.9,2.9,0.4,0.3,0.3,0.6,-4.68
+378  2,Gary Harris,"PG,SG",ORL,24,16,3.8,1.2,0.5,0.6,0.3,0.5,-4.77
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+379  18,Monte Morris,"PG,SG",PHO,38,13,5,1.4,1.7,0.4,0.1,0.4,-4.77
+380  13,Reggie Jackson,"PG,SG",PHI,31,12.4,4.4,1.4,1.5,0.5,0.1,0.5,-4.77
+381  35,Kris Murray,"SF,PF",POR,42,13.7,4,2.2,0.9,0.4,0.2,0.5,-4.81
+382  33,Reece Beekman,PG,BKN,20,10.8,2.3,0.8,1.6,0.7,0.1,0.5,-4.82
+383  61,Torrey Craig,"SF,PF",CHI,9,12.5,6.9,2.8,0.6,0.2,0.1,0,-4.85
+384  38,Jock Landale,C,HOU,24,9.7,3.3,2.8,0.9,0.2,0.3,0.5,-4.88
+385  17,Jabari Walker,"SF,PF",POR,37,10.1,3.2,2.8,0.5,0.5,0.1,0.5,-4.92
+386  16,Gui Santos,"SF,PF",GS,26,12.5,4,2.6,1.2,0.3,0.1,0.6,-4.98
+387  5,Dalen Terry,"SG,SF",CHI,47,12.7,3.8,1.5,1.2,0.4,0.2,0.7,-5.02
+388  39,Sandro Mamukelashvili,PF,SA,31,8.3,4.7,2.4,0.5,0.2,0.3,0.4,-5.02
+389  7,Pelle Larsson,SG,MIA,32,12.9,4,1.5,0.9,0.5,0.1,0.4,-5.07
+390  11,Alex Len,C,SAC,36,7.3,1.4,1.8,0.8,0.2,0.5,0.3,-5.08
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+391  46,Olivier-Maxence Prosper,PF,DAL,40,9.7,3.6,2.4,0.7,0.4,0.1,0.3,-5.08
+392  8,Julian Phillips,"SF,PF",CHI,50,13,4.3,2,0.4,0.4,0.2,0.4,-5.08
+393  2,Jericho Sims,C,MIL,39,10.8,1.6,3.3,0.6,0.2,0.3,0.5,-5.09
+394  30,Rob Dillingham,PG,MIN,26,11.6,5.7,1.2,2.4,0.3,0,1.3,-5.09
+395  47,Cam Spencer,SG,MEM,10,12.1,4,1.7,1.6,0.3,0.1,0.5,-5.1
+396  18,Jeff Dowtin Jr.,,PHI,23,11.1,3.6,1.2,1.4,0.3,0.2,0.1,-5.11
+397  30,Orlando Robinson,C,TOR,16,8.4,2.8,2.1,0.8,0.4,0.2,0.6,-5.11
+398  1,Blake Wesley,"PG,SG",SA,31,9.3,3.1,0.7,1.9,0.5,0.1,0.9,-5.14
+399  26,Pat Spencer,,GS,19,7.2,2.6,1.4,1.6,0.4,0.1,0.6,-5.23
+400  50,Seth Curry,SG,CHA,41,13.6,5.4,1.4,0.6,0.4,0.1,0.4,-5.29
+401  20,Christian Koloko,C,LAL,27,8.6,2,2.1,0.4,0.3,0.3,0.3,-5.33
+403  34,Aaron Holiday,"PG,SG",HOU,36,11.4,4.2,0.9,1.2,0.4,0.1,0.5,-5.37
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+404  10,Josh Minott,"SF,PF",MIN,31,7,2.6,1.1,0.4,0.4,0.3,0.2,-5.39
+405  5,Kobe Brown,PF,LAC,20,7.9,2.7,2.3,0.7,0.2,0.2,0.3,-5.45
+406  19,Kai Jones,C,LAC,27,7.6,2.2,1.7,0.4,0.2,0.4,0.4,-5.48
+407  39,Branden Carlson,,OKC,15,6.4,3.1,1.7,0.4,0.1,0.4,0.1,-5.48
+408  9,Ariel Hukporti,C,NY,19,7.9,1.8,1.8,0.4,0,0.6,0.6,-5.52
+409  34,Dominick Barlow,"PF,C",ATL,14,7.1,2.5,1.4,0.2,0.2,0.4,0,-5.54
+410  3,Jae Crowder,"SF,PF",SAC,7,13.1,2.9,2.4,0.6,0.4,0,0.6,-5.55
+411  91,Tristan Thompson,"PF,C",CLE,25,8,1.7,3,0.7,0,0.3,0.4,-5.56
+412  53,Jamison Battle,,TOR,35,12.6,5.4,1.8,0.9,0.1,0.1,0.3,-5.61
+413  23,Drew Peterson,,BOS,13,9,2.7,2,0.6,0.2,0.2,0.4,-5.65
+414  31,Craig Porter Jr.,"PG,SG",CLE,30,8.3,3,0.8,1,0.2,0.3,0.5,-5.66
+415  21,Johnny Davis,"SG,SF",WAS,34,7.1,2.4,1.1,0.3,0.4,0.2,0.2,-5.71
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+416  7,Jaylon Tyson,SG,CLE,32,9.1,2.9,2.1,0.8,0.2,0.1,0.4,-5.72
+417  94,Armel Traore,,LAL,9,7.4,1.6,1.7,0.1,0.4,0.2,0.3,-5.72
+418  11,Jett Howard,SF,ORL,43,10.9,4.5,1.2,0.6,0.2,0.2,0.5,-5.73
+419  7,Kessler Edwards,"SF,PF",DAL,21,8.5,1.2,1.7,0.5,0.3,0.2,0.2,-5.76
+420  44,Dillon Jones,SF,OKC,30,9.1,2.2,2.1,0.9,0.2,0.1,0.4,-5.76
+421  54,Keshad Johnson,PF,MIA,10,5.7,1.6,1.7,0.3,0.1,0.4,0.3,-5.81
+422  14,Jaylen Clark,SG,MIN,9,10.8,3.4,1.3,0.4,0.3,0.1,0.1,-5.86
+423  10,Isaac Jones,C,SAC,25,8.7,3.6,1.5,0.3,0.1,0.3,0.5,-5.89
+424  7,Cory Joseph,PG,ORL,30,7.5,1.9,0.8,0.8,0.4,0.1,0.4,-5.93
+425  3,Colby Jones,SG,SAC,24,5.4,1.1,1,0.3,0.3,0.3,0.3,-5.95
+426  23,Malaki Branham,"PG,SG",SA,30,9.6,4.5,1.1,0.9,0.2,0.1,0.9,-5.97
+427  22,Jevon Carter,"PG,SG",CHI,24,7.2,3.8,0.9,0.9,0.3,0,0.3,-5.99
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+429  30,Dariq Whitehead,"SG,SF",BKN,8,7,4.5,0.6,0.1,0.4,0.1,0.4,-6
+430  9,Mason Jones,SG,SAC,5,5.6,2.8,1.6,1.8,0,0,0.2,-6.02
+431  12,Antonio Reeves,SG,NO,20,9.3,4.3,0.9,0.7,0.3,0,0.3,-6.02
+432  15,Landry Shamet,"PG,SG",NY,19,10.4,2.7,0.8,0.4,0.4,0.1,0.4,-6.03
+433  34,Xavier Tillman Sr.,"PF,C",BOS,26,7.3,1,1.4,0.3,0.3,0.2,0.3,-6.05
+434  10,Johnny Furphy,SG,IND,32,7.3,1.9,1,0.3,0.3,0.2,0.3,-6.07
+435  17,Jalen Pickett,"PG,SG",DEN,21,8.4,2.6,0.9,1.5,0.2,0,0.3,-6.07
+436  12,Jaden Springer,SG,HOU,26,5.4,1.7,0.9,0.4,0.5,0,0.2,-6.09
+437  7,Jordan McLaughlin,"PG,SG",SA,28,6.8,1.9,0.8,0.9,0.4,0,0.4,-6.12
+438  9,Luke Travers,,CLE,6,6.9,1.3,1,0.8,0.2,0.2,0.3,-6.12
+439  41,Jeff Green,"PF,C",HOU,14,10.4,4.1,1.3,0.2,0.2,0.1,0.3,-6.14
+441  53,Nate Williams,"PG,SG",HOU,6,3.5,2.7,0.5,0.2,0.3,0.2,0.2,-6.18
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+443  48,JT Thor,PF,CLE,9,4.7,3.1,0.7,0.1,0.2,0.3,0.7,-6.22
+444  9,Garrett Temple,SG,TOR,17,3.9,0.6,0.6,0.6,0.4,0.1,0.2,-6.25
+446  14,Damion Lee,"SG,SF",PHO,13,6,3.2,0.9,0.6,0.3,0,0.4,-6.27
+447  15,Jordan Walsh,"SG,SF",BOS,34,7.8,1.6,1.1,0.3,0.2,0.2,0.2,-6.27
+448  13,Caleb Houstan,"SG,SF",ORL,35,11.9,2.9,1,0.4,0.2,0.1,0.1,-6.27
+449  19,Tyler Smith,PF,MIL,15,5,2.9,1.3,0.3,0.1,0.2,0.4,-6.28
+450  47,Cam Christie,SG,LAC,5,5.7,1.2,1.2,0.4,0.4,0,0.4,-6.32
+451  4,Rayan Rupert,"SG,SF",POR,35,7.9,2.5,1.1,0.5,0.2,0.1,0.5,-6.36
+452  2,Brandon Williams,PG,DAL,17,7.1,2.8,0.8,1.1,0.2,0,0.6,-6.38
+453  6,Zeke Nnaji,"PF,C",DEN,30,6.1,1.8,0.9,0.1,0.1,0.3,0.2,-6.41
+454,Bol Bol,"PF,C",PHO,14,6,3.1,1.5,0.3,0.1,0.1,0.5,-6.44
+455  17,Moses Brown,C,IND,9,5.1,3.2,1.4,0,0.2,0.1,0.7,-6.46
+R#,PLAYER,POS,TEAM,GP,MPG,PTS,TREB,AST,STL,BLK,TO,TOTAL
+456,Pacome Dadiet,SF,NY,13,6.4,1.5,1,0.4,0.1,0.2,0.1,-6.46
+457  3,Hunter Tyson,"SF,PF",DEN,35,7.6,2.1,1.5,0.4,0.1,0.1,0.3,-6.47
+458  18,Tyler Kolek,PG,NY,28,5.2,1.9,0.5,0.8,0.3,0,0.3,-6.48
+459  9,Tristan Vukcevic,C,WAS,10,6,3.6,1.4,0.5,0,0.1,0.4,-6.49
+460  19,Luka Garza,C,MIN,19,5.3,3.6,1.3,0.1,0.1,0.1,0.3,-6.49
+462  12,Chris Livingston,"SF,PF",MIL,12,4.7,1.2,1.6,0.1,0.3,0,0.4,-6.54
+463  6,AJ Johnson,SG,MIL,7,6.2,2.9,1,1,0.1,0,0.6,-6.56
+465  31,Collin Gillespie,PG,PHO,6,4,2.2,0.8,0.5,0,0.2,0,-6.58
+466  26,Baylor Scheierman,SG,BOS,9,6,1,1.4,0.4,0.2,0,0,-6.6
+467  40,Liam Robbins,,MIL,13,4.4,0.7,0.9,0.2,0.2,0.2,0.5,-6.62
+468  33,Bronny James Jr.,SG,LAL,16,4,0.9,0.4,0.4,0.3,0.1,0.3,-6.64
+470  61,EJ Liddell,PF,CHI,6,5.1,2.5,0.8,0.5,0.2,0,0.3,-6.65
+471  5,Pete Nance,,PHI,7,9.8,2.1,1.4,0.4,0.1,0,0,-6.66
+474  29,Markieff Morris,PF,LAL,8,5.7,1.5,1,0.5,0.1,0.1,0.3,-6.7
+475  14,Enrique Freeman,PF,IND,19,7.3,1.7,1,0.4,0.1,0.1,0.3,-6.73
+476  29,Adam Flagler,,OKC,18,4.4,1.3,0.4,0,0.3,0.1,0.1,-6.73
+477  26,Leonard Miller,PF,MIN,6,2.6,1.7,1.5,0,0.2,0,0.3,-6.76
+478  32,Patrick Baldwin Jr.,PF,MIL,22,4.6,2.1,1,0.1,0.1,0.1,0.2,-6.8
+479  16,Terrence Shannon Jr.,SG,MIN,11,4.2,1.4,0.2,0.5,0.2,0.1,0.3,-6.81
+480  4,Anthony Gill,"PF,C",WAS,36,5.8,1.8,0.8,0.2,0.2,0,0.2,-6.88
+481  19,Stanley Umude,SF,MIL,19,3.2,0.6,0.7,0.1,0.2,0.1,0.1,-6.89
+482  16,Chris Duarte,SG,CHI,17,4.4,2.1,1.2,0.5,0,0,0.1,-6.94
+483  5,MarJon Beauchamp,"SG,SF",MIL,26,4.7,2,1.2,0.3,0.1,0,0.5,-6.95
+484  14,Joe Ingles,"SG,SF",MIN,11,5.3,0.9,0.4,1.2,0.1,0,0.5,-6.95
+485  24,RayJ Dennis,,IND,6,1.9,0.8,0.5,0.2,0.3,0,0.3,-6.96
+487  14,Colin Castleton,,MEM,10,4.6,1.4,0.9,0,0.1,0.1,0.1,-6.96
+488,Jack McVeigh,,HOU,6,3.6,1.3,0.7,0.2,0,0.2,0.2,-6.97
+489  18,Duop Reath,C,POR,25,5.3,2.3,0.9,0.2,0,0.1,0.2,-6.98
+491  5,Jazian Gortman,,DAL,16,3.5,1.5,0.3,0.4,0.1,0.1,0.3,-7.03
+492  47,Doug McDermott,"SG,SF",SAC,31,8.4,3.4,0.5,0.1,0.1,0,0.2,-7.04
+493  11,Spencer Jones,,DEN,7,2.1,0.7,0.4,0,0.3,0,0.1,-7.06
+494  22,Alex Ducas,,OKC,12,4.7,1.7,1,0.1,0.1,0,0.1,-7.07
+495  1,James Johnson,PF,IND,10,3.2,0.8,0.5,0.4,0,0.2,0.4,-7.07
+496  11,Yuki Kawamura,,MEM,19,3.3,1.3,0.4,0.7,0.1,0,0.2,-7.07
+497  4,Trey Alexander,SG,DEN,15,4.3,0.8,0.3,0.4,0.1,0.1,0.1,-7.08
+498  22,PJ Dozier,SG,MIN,9,3.9,0.8,0.6,0.6,0.1,0,0.1,-7.09
+499  18,PJ Hall,C,DEN,11,2.7,1,1,0.2,0,0.1,0.1,-7.1
+500  4,Sidy Cissoko,"SF,PF",WAS,17,3.2,1.3,0.6,0.4,0.1,0,0.1,-7.12
+501  14,Justin Minaya,"SG,SF",POR,6,2.9,0,0.5,0.3,0.2,0,0,-7.16
+506  8,Jacob Toppin,,NY,16,3,0.4,0.7,0.3,0.1,0,0.1,-7.27
+508  7,Josh Christopher,"PG,SG",MIA,8,3.4,0.8,0.4,0.5,0,0.1,0.5,-7.32
+510  19,Matt Ryan,SF,NY,17,3.6,1.5,0.4,0.1,0.1,0,0.2,-7.36
+511  12,Ulrich Chomche,PF,TOR,6,3.4,0.8,1,0.3,0,0,0.3,-7.37
+512  22,Maxwell Lewis,SF,BKN,8,3.8,0.9,0.3,0.3,0.1,0,0.3,-7.41
+513  7,JD Davison,"PG,SG",BOS,5,4.7,1.2,0.4,0.2,0.2,0,1.2,-7.42
+516  33,Bryce McGowens,"SG,SF",POR,8,2.6,1.6,0.1,0.1,0.1,0,0.4,-7.52
+519  3,Malevy Leons,,OKC,6,3.5,0.3,0.5,0.2,0,0,0.2,-7.66
+521  3,Yongxi Cui,,BKN,5,2.1,0.6,0.4,0,0,0,0,-7.71
+522  8,Tristen Newton,PG,MIN,6,1.6,0.5,0.2,0.2,0,0,0.2,-7.75
+524  5,Jalen Bridges,SF,PHO,5,5,0.8,0.6,0,0,0,0.8,-7.83
