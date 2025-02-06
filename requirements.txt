@@ -1,0 +1,6 @@
+requests
+pandas
+numpy
+pulp
+xlsxwriter
+uuid
