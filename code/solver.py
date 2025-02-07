@@ -168,7 +168,7 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, in_team, cap_used, tra
     prob += pulp.lpSum([squad_var[current_week][current_day][i] for i in gd_banned]) == 0
     
    
-    prob.solve(pulp.HiGHS_CMD(timeLimit=max_time, gapRel=gap, options=["write_solution_to_file=false"]))
+    prob.solve(pulp.HiGHS(timeLimit=max_time, gapRel=gap))
     print("Score: ", pulp.value(prob.objective))
     print("Status: ", pulp.LpStatus[prob.status])
     
@@ -183,9 +183,9 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, in_team, cap_used, tra
     for a in week_day_dict.keys():
         for b in week_day_dict[a]:
             for i in player_ids:
-                squad[a][b][i] = squad_var[a][b][i].varValue
-                team[a][b][i] = team_var[a][b][i].varValue
-                cap[a][b][i] = cap_var[a][b][i].varValue
+                squad[a][b][i] = round(squad_var[a][b][i].varValue)
+                team[a][b][i] = round(team_var[a][b][i].varValue)
+                cap[a][b][i] = round(cap_var[a][b][i].varValue)
     
     flattened_dict = {}
 
