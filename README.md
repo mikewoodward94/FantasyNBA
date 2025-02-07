@@ -7,13 +7,21 @@ Sign up and play here: https://nbafantasy.nba.com/
 Click here to auto join: https://nbafantasy.nba.com/leagues/auto-join/dtbzi7
 
 ## Important Instructions
+### team.json
 Replace the team.json found in the data file with that of your own team!
 
 You can find this here: https://nbafantasy.nba.com/api/my-team/{YOUR_ID}/
 
 You must be logged in, and you can find your ID in the url if you navigate to your gameday history.
 
-After you've done this run run_solve.py and it *should* all work.
+### HiGHS
+This solver uses HiGHS, make sure you have it downloaded and included in Path.
+
+Can be downloaded here: https://github.com/JuliaBinaryWrappers/HiGHSstatic_jll.jl
+
+### Running the Code
+
+After you've done this navigate to the code folder and run run_solve.py and it *should* all work.
 
 EV and Solve will be found in the output folder following successful run.
 
