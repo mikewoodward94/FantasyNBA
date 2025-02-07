@@ -168,7 +168,7 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, in_team, cap_used, tra
     prob += pulp.lpSum([squad_var[current_week][current_day][i] for i in gd_banned]) == 0
     
    
-    prob.solve(pulp.GLPK_CMD(timeLimit=max_time ,options = ["--mipgap", str(gap)]))
+    prob.solve(pulp.HiGHS_CMD(timeLimit=max_time, gapRel=gap, options=["write_solution_to_file=false"]))
     print("Score: ", pulp.value(prob.objective))
     print("Status: ", pulp.LpStatus[prob.status])
     
