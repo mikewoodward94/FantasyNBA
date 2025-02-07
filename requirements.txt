@@ -4,3 +4,4 @@ numpy
 pulp
 xlsxwriter
 uuid
+highspy
