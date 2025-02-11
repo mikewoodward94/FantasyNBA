@@ -284,7 +284,7 @@ def read_team_json():
         
         in_team = [pick["element"] for pick in d["picks"]]
         in_team_sell_price = [[pick["element"], pick["selling_price"]] for pick in d["picks"]]
-        cap_used = any(chip["name"] == "phcapt" and chip["status_for_entry"] in ["played", "active"] for chip in d["chips"])
+        cap_used = any(chip["name"] == "phcapt" and chip["status_for_entry"] in ["played"] for chip in d["chips"])
         transfers_left = 2 - d["transfers"]["made"]
         in_bank = d["transfers"]["bank"]
         
