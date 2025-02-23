@@ -3,11 +3,13 @@ import pulp
 import re
 import xlsxwriter
 import uuid
+import datetime
 
-def nba_solver(data, locked, banned, gd_banned, wildcard, in_team, cap_used, transfers_left, in_bank, decay, gap, max_time, transfer_penalty):
+def nba_solver(data, locked, banned, gd_banned, wildcard, day_solve, in_team, cap_used, transfers_left, in_bank, decay, gap, max_time, transfer_penalty):
     print("Setting up and starting solve")
     team_value = data[data['id'].isin(in_team)]['now_cost'].sum()
-    money = team_value + in_bank    
+    money = team_value + in_bank
+    print(f"Money: {money}") 
     
     # remove banned players
     data = data[~data['id'].isin(banned)]    
@@ -100,8 +102,11 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, in_team, cap_used, tra
     prob = pulp.LpProblem("Optimiser", pulp.LpMaximize)
    
     # Objective Function
-    prob += pulp.lpSum([((points[a][b][i] * team_var[a][b][i]) + (points[a][b][i] * cap_var[a][b][i]) - (transfer_var[a][b][i] * penalty_dict[a][b] * decay_dict[a][b])) for a in week_day_dict.keys() for b in week_day_dict[a] for i in player_ids])
-
+    if day_solve == True:
+            prob += pulp.lpSum([((points[a][b][i] * team_var[a][b][i])) for a in week_day_dict.keys() for b in week_day_dict[a] for i in player_ids])
+    else:
+        prob += pulp.lpSum([((points[a][b][i] * team_var[a][b][i]) + (points[a][b][i] * cap_var[a][b][i]) - (transfer_var[a][b][i] * penalty_dict[a][b] * decay_dict[a][b])) for a in week_day_dict.keys() for b in week_day_dict[a] for i in player_ids])
+    
     for a in week_day_dict.keys():
         
         if cap_used == True and a == current_week:
@@ -112,11 +117,13 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, in_team, cap_used, tra
         for b in week_day_dict[a]:
             prob += pulp.lpSum([squad_var[a][b][i] for i in player_ids]) == 10
             prob += pulp.lpSum([team_var[a][b][i] for i in player_ids]) == 5
-            prob +=  pulp.lpSum([data['now_cost'][i] * squad_var[a][b][i] for i in player_ids]) <= money
+            
             prob +=  pulp.lpSum([positions['pos_1'][i] * team_var[a][b][i] for i in player_ids]) >= 2
             prob +=  pulp.lpSum([positions['pos_1'][i] * team_var[a][b][i] for i in player_ids]) <= 3
             prob +=  pulp.lpSum([positions['pos_1'][i] * squad_var[a][b][i] for i in player_ids]) == 5
-            
+
+            if day_solve == False:
+                prob +=  pulp.lpSum([data['now_cost'][i] * squad_var[a][b][i] for i in player_ids]) <= money
             
             for team in teams:
                 prob +=  pulp.lpSum([teams[team][i] * squad_var[a][b][i] for i in player_ids]) <= 2
@@ -125,49 +132,44 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, in_team, cap_used, tra
                 prob += team_var[a][b][i] <= squad_var[a][b][i]
                 prob += cap_var[a][b][i] <= team_var[a][b][i]
         
-    
-    # Track transfers across days and weeks
-    for a in week_day_dict.keys():
-        for b in week_day_dict[a]:
-            for i in player_ids:
-                # Transfer event: 1 if the player was added or removed on this day, 0 otherwise
-                
-                # Transfer check within the same week (compare with the previous day in the same week)
-                if a == current_week and b == current_day and wildcard == True:
-                    prob += transfer_var[a][b][i] == 0
-                elif a == current_week and b == current_day and wildcard == False:
-                    prob += transfer_var[a][b][i] >= squad_var[a][b][i] - in_team_flag[i]
-                elif b > 1:
-                    current_index = week_day_dict[a].index(b)
-                    previous_day = week_day_dict[a][current_index - 1]
-                    prob += transfer_var[a][b][i] >= squad_var[a][b][i] - squad_var[a][previous_day][i]
-                else:
-                    # For the first day of the new week, compare with the last day of the previous week
-                    if a > current_week:
-                        last_day_of_prev_week = max(week_day_dict[a-1])
-                        prob += transfer_var[a][b][i] >= squad_var[a][b][i] - squad_var[a-1][last_day_of_prev_week][i]
-                    else:
-                        # For the very first week, no transfers should have occurred before
+    if day_solve == False:
+        # Track transfers across days and weeks
+        for a in week_day_dict.keys():
+            for b in week_day_dict[a]:
+                for i in player_ids:
+                    # Transfer event: 1 if the player was added or removed on this day, 0 otherwise
+                    
+                    # Transfer check within the same week (compare with the previous day in the same week)
+                    if a == current_week and b == current_day and wildcard == True:
                         prob += transfer_var[a][b][i] == 0
+                    elif a == current_week and b == current_day and wildcard == False:
+                        prob += transfer_var[a][b][i] >= squad_var[a][b][i] - in_team_flag[i]
+                    elif b > 1:
+                        current_index = week_day_dict[a].index(b)
+                        previous_day = week_day_dict[a][current_index - 1]
+                        prob += transfer_var[a][b][i] >= squad_var[a][b][i] - squad_var[a][previous_day][i]
+                    else:
+                        # For the first day of the new week, compare with the last day of the previous week
+                        if a > current_week:
+                            last_day_of_prev_week = max(week_day_dict[a-1])
+                            prob += transfer_var[a][b][i] >= squad_var[a][b][i] - squad_var[a-1][last_day_of_prev_week][i]
+                        else:
+                            # For the very first week, no transfers should have occurred before
+                            prob += transfer_var[a][b][i] == 0
                         
-            
-        
-        if a > current_week:
-            prob += pulp.lpSum([transfer_var[a][b][i] for b in week_day_dict[a] for i in player_ids]) <= 2
-        else:
-            prob += pulp.lpSum([transfer_var[a][b][i] for b in week_day_dict[a] for i in player_ids]) <= transfers_left
-    
+            if a > current_week:
+                prob += pulp.lpSum([transfer_var[a][b][i] for b in week_day_dict[a] for i in player_ids]) <= 2
+            else:
+                prob += pulp.lpSum([transfer_var[a][b][i] for b in week_day_dict[a] for i in player_ids]) <= transfers_left
     
     for i in locked:
         prob += squad_var[current_week][current_day][i] == 1
             
-    
-    if wildcard == False:
+    if wildcard == False and day_solve == False:
         prob += pulp.lpSum([squad_var[current_week][current_day][i] for i in in_team]) >= 8
     
     prob += pulp.lpSum([squad_var[current_week][current_day][i] for i in gd_banned]) == 0
     
-   
     prob.solve(pulp.HiGHS(timeLimit=max_time, gapRel=gap))
     print("Score: ", pulp.value(prob.objective))
     print("Status: ", pulp.LpStatus[prob.status])
@@ -242,11 +244,13 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, in_team, cap_used, tra
     cap_df = pd.merge(output, cap_df, on=['id'], how='right')
     cap_df = cap_df[cap_df.iloc[:,3:].eq(1).any(axis=1)]  
     
-    
-    writer = pd.ExcelWriter('../output/NBA_Squad.xlsx', engine = 'xlsxwriter')
+    time_now = datetime.datetime.now()
+    stamp = time_now.strftime("%Y-%m-%d_%H-%M-%S")
+
+    writer = pd.ExcelWriter(f'../output/NBA_Squad_{stamp}.xlsx', engine = 'xlsxwriter')
     squad_df.to_excel(writer, sheet_name = 'Squad', index=False)
     team_df.to_excel(writer, sheet_name = 'Team', index=False)
     cap_df.to_excel(writer, sheet_name = 'Cap', index=False)
     writer.close()
-    print("Squad and Transfer Plan output to NBA_Squad.xlsx")
+    print(f"Squad and Transfer Plan output to NBA_Squad_{stamp}.xlsx")
     
