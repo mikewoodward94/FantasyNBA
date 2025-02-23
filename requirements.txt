@@ -5,3 +5,4 @@ pulp
 xlsxwriter
 uuid
 highspy
+tqdm
