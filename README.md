@@ -60,6 +60,12 @@ gd_banned: List of IDs to ban from team for only next Game Day
 ### Chip Settings
 wildcard: Use wildcard (True or False)
 
+allstar: Use allstar (True or False)
+
+day_solve: Choose to solve just the allstar day (True) or a normal solve ignoring that day (False)
+
+allstar_day: The gameday that allstar chip is used on i.e. "Gameweek 20 - Day 1"
+
 ### Solver Settings
 max_time: Max time in seconds to allow for solve.
 
