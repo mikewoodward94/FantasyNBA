@@ -41,7 +41,7 @@ allstar_day = 'Gameweek 20 - Day 1'
 # Solver Settings
 max_time = 3600
 gap = 0.0
-info_source = ''
+info_source = 'API'
 
 def main(info_source, value_cutoff, decay, home, away, first_gd, first_gw, final_gw, final_gd, locked, banned, gd_banned, wildcard, allstar, day_solve, allstar_day, gap, max_time, transfer_penalty):
     if info_source == 'API':
