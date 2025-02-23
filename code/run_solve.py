@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import json
 import re
+from tqdm import tqdm
 
 from solver import nba_solver
 
@@ -43,7 +44,12 @@ max_time = 3600
 gap = 0.0
 info_source = 'API'
 
-def main(info_source, value_cutoff, decay, home, away, first_gd, first_gw, final_gw, final_gd, locked, banned, gd_banned, wildcard, allstar, day_solve, allstar_day, gap, max_time, transfer_penalty):
+# Simulations Settings
+sims = False
+number_of_sims = 10
+noise = 0.05
+
+def main(is_sim, info_source, value_cutoff, decay, home, away, first_gd, first_gw, final_gw, final_gd, locked, banned, gd_banned, wildcard, allstar, day_solve, allstar_day, gap, max_time, transfer_penalty):
     if info_source == 'API':
         # Get From API
         print("Retrieving player and fixture data from Fantasy NBA API")
@@ -73,6 +79,10 @@ def main(info_source, value_cutoff, decay, home, away, first_gd, first_gw, final
     
     for p_id, selling_price in in_team_sell_price:
         player_data['now_cost'] = np.where(player_data['id'] == p_id, selling_price, player_data['now_cost'])
+
+    if is_sim == True:
+        for col in ['PTS','TREB','AST','STL','BLK','TO']:
+            player_data[col] = player_data[col] + np.random.uniform(-noise, noise, size=len(player_data)) * player_data[col]
     
     fixtures = read_fixtures(first_gd, first_gw, final_gw, final_gd)
     player_data = player_data.merge(fixtures, on='id', how='inner')
@@ -102,7 +112,7 @@ def main(info_source, value_cutoff, decay, home, away, first_gd, first_gw, final
 
     player_data.to_csv('../output/NBA_EV.csv', index=False)
     print("EV generated and output to NBA_EV.csv")
-    nba_solver(player_data, locked, banned, gd_banned, wildcard, day_solve, in_team, cap_used, transfers_left, in_bank, decay, gap, max_time, transfer_penalty)
+    nba_solver(player_data, is_sim, locked, banned, gd_banned, wildcard, day_solve, in_team, cap_used, transfers_left, in_bank, decay, gap, max_time, transfer_penalty)
     
     
 def get_player_info():
@@ -308,4 +318,9 @@ def read_team_json():
     return(in_team, in_team_sell_price, cap_used, transfers_left, in_bank)
 
 if __name__ == '__main__':
-    main(info_source, value_cutoff, decay, home, away, first_gd, first_gw, final_gw, final_gd, locked, banned, gd_banned, wildcard, allstar, day_solve, allstar_day, gap, max_time, transfer_penalty)
+
+    if sims == True:
+        for i in tqdm(range(0,number_of_sims)):
+            main(True, info_source, value_cutoff, decay, home, away, first_gd, first_gw, final_gw, final_gd, locked, banned, gd_banned, wildcard, allstar, day_solve, allstar_day, gap, max_time, transfer_penalty)
+    else:
+        main(False, info_source, value_cutoff, decay, home, away, first_gd, first_gw, final_gw, final_gd, locked, banned, gd_banned, wildcard, allstar, day_solve, allstar_day, gap, max_time, transfer_penalty)
