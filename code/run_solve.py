@@ -22,10 +22,10 @@ transfer_penalty = {
 }
 
 # Gameday Range
-first_gd = 4
-first_gw = 16
-final_gd = 4
-final_gw = 18
+first_gd = 1
+first_gw = 19
+final_gd = 7
+final_gw = 20
 
 # Player Settings
 locked = []
@@ -34,13 +34,16 @@ gd_banned = []
 
 # Chip Settings
 wildcard = False
+allstar = False
+day_solve = False
+allstar_day = 'Gameweek 20 - Day 1'
 
 # Solver Settings
 max_time = 3600
 gap = 0.0
-info_source = 'API'
+info_source = ''
 
-def main(info_source, value_cutoff, decay, home, away, first_gd, first_gw, final_gw, final_gd, locked, banned, gd_banned, wildcard, gap, max_time, transfer_penalty):
+def main(info_source, value_cutoff, decay, home, away, first_gd, first_gw, final_gw, final_gd, locked, banned, gd_banned, wildcard, allstar, day_solve, allstar_day, gap, max_time, transfer_penalty):
     if info_source == 'API':
         # Get From API
         print("Retrieving player and fixture data from Fantasy NBA API")
@@ -53,7 +56,13 @@ def main(info_source, value_cutoff, decay, home, away, first_gd, first_gw, final
     
     print("Generating EV")
     in_team, in_team_sell_price, cap_used, transfers_left, in_bank = read_team_json()
-    
+    '''
+    in_team = []
+    in_team_sell_price = []
+    cap_used = False
+    transfers_left = 2
+    in_bank = 0
+    '''
     player_info = pd.read_csv('../data/player_info.csv')
     player_info = player_info[(player_info['status'].isin(['a','d'])) | (player_info['id'].isin(in_team))]
    
@@ -69,6 +78,7 @@ def main(info_source, value_cutoff, decay, home, away, first_gd, first_gw, final
     player_data = player_data.merge(fixtures, on='id', how='inner')
     
     team_def_strength = read_team_def_strength()
+    team_def_strength.to_csv('../data/team_def_strength.csv', index=False)
     def_rating_dict = team_def_strength.set_index('TEAM').T.to_dict('list')
     
     location_dict = {'home': home, 'away': away}
@@ -84,9 +94,15 @@ def main(info_source, value_cutoff, decay, home, away, first_gd, first_gw, final
 
     player_data = apply_decay(player_data, decay)
     
+    if allstar == True:
+        if day_solve == True:
+            player_data = player_data[['id','name','team','now_cost','element_type','PTS','TREB','AST','STL','BLK','TO','PPG',allstar_day]]
+        else:
+            player_data = player_data.drop(columns=[allstar_day])
+
     player_data.to_csv('../output/NBA_EV.csv', index=False)
     print("EV generated and output to NBA_EV.csv")
-    nba_solver(player_data, locked, banned, gd_banned, wildcard, in_team, cap_used, transfers_left, in_bank, decay, gap, max_time, transfer_penalty)
+    nba_solver(player_data, locked, banned, gd_banned, wildcard, day_solve, in_team, cap_used, transfers_left, in_bank, decay, gap, max_time, transfer_penalty)
     
     
 def get_player_info():
@@ -245,7 +261,7 @@ def transform_gameday(row,col):
 
 def multiply_list(lst):
 
-    return np.prod(lst)  
+    return np.prod(lst)
 
 def apply_decay(player_data, decay_factor):
     
@@ -274,6 +290,7 @@ def apply_decay(player_data, decay_factor):
             col_name = f"Gameweek {gameweek} - Day {gameday}"
             if col_name in player_data.columns:  
                 player_data[col_name] *= decay
+                player_data[col_name] = round(player_data[col_name],2)
                 decay *= decay_factor  
     return(player_data)
    
@@ -288,7 +305,7 @@ def read_team_json():
         transfers_left = 2 - d["transfers"]["made"]
         in_bank = d["transfers"]["bank"]
         
-    return(in_team, in_team_sell_price, cap_used, transfers_left,in_bank)
+    return(in_team, in_team_sell_price, cap_used, transfers_left, in_bank)
 
 if __name__ == '__main__':
-    main(info_source, value_cutoff, decay, home, away, first_gd, first_gw, final_gw, final_gd, locked, banned, gd_banned, wildcard, gap, max_time, transfer_penalty)
+    main(info_source, value_cutoff, decay, home, away, first_gd, first_gw, final_gw, final_gd, locked, banned, gd_banned, wildcard, allstar, day_solve, allstar_day, gap, max_time, transfer_penalty)
