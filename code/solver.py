@@ -5,7 +5,7 @@ import xlsxwriter
 import uuid
 import datetime
 
-def nba_solver(data, locked, banned, gd_banned, wildcard, day_solve, in_team, cap_used, transfers_left, in_bank, decay, gap, max_time, transfer_penalty):
+def nba_solver(data, is_sim, locked, banned, gd_banned, wildcard, day_solve, in_team, cap_used, transfers_left, in_bank, decay, gap, max_time, transfer_penalty):
     print("Setting up and starting solve")
     team_value = data[data['id'].isin(in_team)]['now_cost'].sum()
     money = team_value + in_bank
@@ -244,13 +244,17 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, day_solve, in_team, ca
     cap_df = pd.merge(output, cap_df, on=['id'], how='right')
     cap_df = cap_df[cap_df.iloc[:,3:].eq(1).any(axis=1)]  
     
-    time_now = datetime.datetime.now()
-    stamp = time_now.strftime("%Y-%m-%d_%H-%M-%S")
+    if is_sim == True:
+        unique_id = uuid.uuid4()
+        squad_df.to_csv(f"../sims/squad_{unique_id}.csv", index=False)
+    else:
+        time_now = datetime.datetime.now()
+        stamp = time_now.strftime("%Y-%m-%d_%H-%M-%S")
 
-    writer = pd.ExcelWriter(f'../output/NBA_Squad_{stamp}.xlsx', engine = 'xlsxwriter')
-    squad_df.to_excel(writer, sheet_name = 'Squad', index=False)
-    team_df.to_excel(writer, sheet_name = 'Team', index=False)
-    cap_df.to_excel(writer, sheet_name = 'Cap', index=False)
-    writer.close()
-    print(f"Squad and Transfer Plan output to NBA_Squad_{stamp}.xlsx")
-    
+        writer = pd.ExcelWriter(f'../output/NBA_Squad_{stamp}.xlsx', engine = 'xlsxwriter')
+        squad_df.to_excel(writer, sheet_name = 'Squad', index=False)
+        team_df.to_excel(writer, sheet_name = 'Team', index=False)
+        cap_df.to_excel(writer, sheet_name = 'Cap', index=False)
+        writer.close()
+        print(f"Squad and Transfer Plan output to NBA_Squad_{stamp}.xlsx")
+        
