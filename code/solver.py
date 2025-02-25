@@ -254,8 +254,18 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, day_solve, in_team, ca
     writer.close()
     print(f"Squad and Transfer Plan output to NBA_Squad_{stamp}.xlsx")
 
-    sell_summary=[]
-    buy_summary=[]
+    sell_summary = []
+    buy_summary = []
+    team_summary = dict()
+
+    # Find line-ups for every week, highlighting captains where necessary
+    for day in week_day_list:
+        day_str = f'{day[0]}_{day[1]}'
+        day_cap = cap_df.loc[cap_df[day_str] == 1]['name'].to_list()
+        day_team = team_df.loc[team_df[day_str] == 1]['name'].to_list()
+        if day_cap:
+            day_team = [player + " (C)" if player == day_cap[0] else player for player in day_team]
+        team_summary[day_str] = day_team
 
     #Find current gw transfers
     print()
@@ -268,6 +278,8 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, day_solve, in_team, ca
             else:
                 print("Buy: " + squad_df.iloc[i,1] + ", Price: " + str(squad_df.iloc[i,2]))
                 buy_summary.append(str(squad_df.iloc[i,1]))
+    print("Line-up: " + ", ".join(team_summary[squad_df.columns[3]]))
+    print()
 
     #Find future gw transfers
     for z in range(4, (len(squad_df.columns))-1):
@@ -278,6 +290,8 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, day_solve, in_team, ca
                     print("Sell: " + squad_df.iloc[i,1] + ", Price: " + str(squad_df.iloc[i,2]))
                 else:
                     print("Buy: " + squad_df.iloc[i,1] + ", Price: " + str(squad_df.iloc[i,2]))
+        print("Line-up: " + ", ".join(team_summary[squad_df.columns[z]]))
+        print()
 
     #Print summary
     print()
