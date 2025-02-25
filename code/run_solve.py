@@ -56,13 +56,7 @@ def main(info_source, value_cutoff, decay, home, away, first_gd, first_gw, final
     
     print("Generating EV")
     in_team, in_team_sell_price, cap_used, transfers_left, in_bank = read_team_json()
-    '''
-    in_team = []
-    in_team_sell_price = []
-    cap_used = False
-    transfers_left = 2
-    in_bank = 0
-    '''
+
     player_info = pd.read_csv('../data/player_info.csv')
     player_info = player_info[(player_info['status'].isin(['a','d'])) | (player_info['id'].isin(in_team))]
    
