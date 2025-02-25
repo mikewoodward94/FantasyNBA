@@ -253,4 +253,40 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, day_solve, in_team, ca
     cap_df.to_excel(writer, sheet_name = 'Cap', index=False)
     writer.close()
     print(f"Squad and Transfer Plan output to NBA_Squad_{stamp}.xlsx")
+
+    sell_summary=[]
+    buy_summary=[]
+
+    #Find current gw transfers
+    print()
+    print(squad_df.columns[3] + ": ")
+    for i in range(len(squad_df)):
+        if squad_df.iloc[i,len(squad_df.columns)-1] != squad_df.iloc[i,3]:
+            if squad_df.iloc[i,len(squad_df.columns)-1] == 1:
+                print("Sell: " + squad_df.iloc[i,1] + ", Price: " + str(squad_df.iloc[i,2]))
+                sell_summary.append(str(squad_df.iloc[i,1]))
+            else:
+                print("Buy: " + squad_df.iloc[i,1] + ", Price: " + str(squad_df.iloc[i,2]))
+                buy_summary.append(str(squad_df.iloc[i,1]))
+
+    #Find future gw transfers
+    for z in range(4, (len(squad_df.columns))-1):
+        print(squad_df.columns[z] + ": ")
+        for i in range(len(squad_df)):
+            if squad_df.iloc[i,z-1] != squad_df.iloc[i,z]:
+                if squad_df.iloc[i,z-1] == 1:
+                    print("Sell: " + squad_df.iloc[i,1] + ", Price: " + str(squad_df.iloc[i,2]))
+                else:
+                    print("Buy: " + squad_df.iloc[i,1] + ", Price: " + str(squad_df.iloc[i,2]))
+
+    #Print summary
+    print()
+    print("Summary: ")
+    if buy_summary==[]:
+        print("Roll")
+    else:
+        for i in range(len(buy_summary)):
+            print("Buy: " + str(buy_summary[i]))
+            print("Sell: " + str(sell_summary[i]))
+    print()
     
