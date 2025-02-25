@@ -137,6 +137,11 @@ def get_fixture_info(player_info):
     for i in player_info['id']:
         url = "https://nbafantasy.nba.com/api/element-summary/"+str(i)+"/"
         r = requests.get(url)
+        while r.status_code == 429:
+            print('Too many requests, sleeping for 30s')
+            time.sleep(30)
+            r = requests.get(url)
+            
         json = r.json()
         if json == {'detail': 'Not found.'}:
             continue
