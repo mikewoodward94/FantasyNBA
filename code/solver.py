@@ -5,17 +5,33 @@ import xlsxwriter
 import uuid
 import datetime
 
-def nba_solver(data, locked, banned, gd_banned, wildcard, day_solve, in_team, cap_used, transfers_left, in_bank, decay, gap, max_time, transfer_penalty):
-    print("Setting up and starting solve")
-    team_value = data[data['id'].isin(in_team)]['now_cost'].sum()
-    money = team_value + in_bank
-    print(f"Money: {money}") 
-    
-    # remove banned players
-    data = data[~data['id'].isin(banned)]    
 
-    data = data.set_index('id')
-    
+def nba_solver(
+    data,
+    locked,
+    banned,
+    gd_banned,
+    wildcard,
+    day_solve,
+    in_team,
+    cap_used,
+    transfers_left,
+    in_bank,
+    decay,
+    gap,
+    max_time,
+    transfer_penalty,
+):
+    print("Setting up and starting solve")
+    team_value = data[data["id"].isin(in_team)]["now_cost"].sum()
+    money = team_value + in_bank
+    print(f"Money: {money}")
+
+    # remove banned players
+    data = data[~data["id"].isin(banned)]
+
+    data = data.set_index("id")
+
     player_ids = data.index
     point_columns = data.columns[11:]
 
@@ -23,28 +39,30 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, day_solve, in_team, ca
     week_day_list = []
     week_day_dict = {}
     for col in point_columns:
-        week = int(re.findall('(\d+)',col)[0])
-        day = int(re.findall('(\d+)',col)[1])
+        week = int(re.findall("(\d+)", col)[0])
+        day = int(re.findall("(\d+)", col)[1])
         temp_list = [week, day]
         week_day_list.append(temp_list)
-        
+
     for inner_list in week_day_list:
         key = inner_list[0]
         value = inner_list[1]
-    
+
         if key not in week_day_dict:
             week_day_dict[key] = []
         week_day_dict[key].append(value)
-    
+
     current_week = min(list(week_day_dict.keys()))
     current_day = min(list(week_day_dict[current_week]))
-    
+
     in_team_flag = {id: 1 if id in in_team else 0 for id in player_ids}
-    
+
     # create columns for team and position
-    positions = pd.get_dummies(data, columns=['element_type'], prefix='pos')[['pos_1','pos_2']].astype(int)
-    teams = pd.get_dummies(data, columns=['team'], prefix='team')
-    teams = teams.loc[:, teams.columns.str.startswith('team_')].astype(int)
+    positions = pd.get_dummies(data, columns=["element_type"], prefix="pos")[
+        ["pos_1", "pos_2"]
+    ].astype(int)
+    teams = pd.get_dummies(data, columns=["team"], prefix="team")
+    teams = teams.loc[:, teams.columns.str.startswith("team_")].astype(int)
 
     # create dictionaries
     points = {i: {j: {} for j in week_day_dict[i]} for i in week_day_dict.keys()}
@@ -63,19 +81,18 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, day_solve, in_team, ca
         for day in days:
             decay_dict[week][day] = decay_factor**cumulative_index
             cumulative_index += 1
-            
+
     base_penalty = transfer_penalty
-    
+
     penalty_dict = {
         week: {day: base_penalty[day] for day in days if day in base_penalty}
         for week, days in week_day_dict.items()
     }
-    
-    
+
     # Create variables for each gameweek + gameday IN ORDER accounting for varying week lengths
     for a in week_day_dict.keys():
         for b in week_day_dict[a]:
-            
+
             position = None
             current_position = 0
 
@@ -87,220 +104,375 @@ def nba_solver(data, locked, banned, gd_banned, wildcard, day_solve, in_team, ca
                         current_position += 1
                         if value == b:
                             position = current_position
-                            break  
+                            break
                 if position is not None:
                     break
-            
+
             for i in player_ids:
-                points[a][b][i] = data[point_columns[position-1]][i]
-                squad_var[a][b][i] = pulp.LpVariable('gwk' + str(a) + 'gdy' + str(b) +'x' + str(i), cat='Binary')
-                team_var[a][b][i] = pulp.LpVariable('gwk' + str(a) + 'gdy' + str(b) +'y' + str(i), cat='Binary')
-                cap_var[a][b][i] = pulp.LpVariable('gwk' + str(a) + 'gdy' + str(b) +'c' + str(i), cat='Binary')
-                transfer_var[a][b][i] = pulp.LpVariable(f'transfer_gwk{a}_gdy{b}_x{i}', cat='Binary')
-    
+                points[a][b][i] = data[point_columns[position - 1]][i]
+                squad_var[a][b][i] = pulp.LpVariable(
+                    "gwk" + str(a) + "gdy" + str(b) + "x" + str(i), cat="Binary"
+                )
+                team_var[a][b][i] = pulp.LpVariable(
+                    "gwk" + str(a) + "gdy" + str(b) + "y" + str(i), cat="Binary"
+                )
+                cap_var[a][b][i] = pulp.LpVariable(
+                    "gwk" + str(a) + "gdy" + str(b) + "c" + str(i), cat="Binary"
+                )
+                transfer_var[a][b][i] = pulp.LpVariable(
+                    f"transfer_gwk{a}_gdy{b}_x{i}", cat="Binary"
+                )
+
     # Start Problem
     prob = pulp.LpProblem("Optimiser", pulp.LpMaximize)
-   
+
     # Objective Function
     if day_solve == True:
-            prob += pulp.lpSum([((points[a][b][i] * team_var[a][b][i])) for a in week_day_dict.keys() for b in week_day_dict[a] for i in player_ids])
+        prob += pulp.lpSum(
+            [
+                ((points[a][b][i] * team_var[a][b][i]))
+                for a in week_day_dict.keys()
+                for b in week_day_dict[a]
+                for i in player_ids
+            ]
+        )
     else:
-        prob += pulp.lpSum([((points[a][b][i] * team_var[a][b][i]) + (points[a][b][i] * cap_var[a][b][i]) - (transfer_var[a][b][i] * penalty_dict[a][b] * decay_dict[a][b])) for a in week_day_dict.keys() for b in week_day_dict[a] for i in player_ids])
-    
+        prob += pulp.lpSum(
+            [
+                (
+                    (points[a][b][i] * team_var[a][b][i])
+                    + (points[a][b][i] * cap_var[a][b][i])
+                    - (transfer_var[a][b][i] * penalty_dict[a][b] * decay_dict[a][b])
+                )
+                for a in week_day_dict.keys()
+                for b in week_day_dict[a]
+                for i in player_ids
+            ]
+        )
+
     for a in week_day_dict.keys():
-        
+
         if cap_used == True and a == current_week:
-            prob += pulp.lpSum([cap_var[a][b][i] for b in week_day_dict[a] for i in player_ids]) == 0
+            prob += (
+                pulp.lpSum(
+                    [cap_var[a][b][i] for b in week_day_dict[a] for i in player_ids]
+                )
+                == 0
+            )
         else:
-            prob += pulp.lpSum([cap_var[a][b][i] for b in week_day_dict[a] for i in player_ids]) == 1
-        
+            prob += (
+                pulp.lpSum(
+                    [cap_var[a][b][i] for b in week_day_dict[a] for i in player_ids]
+                )
+                == 1
+            )
+
         for b in week_day_dict[a]:
             prob += pulp.lpSum([squad_var[a][b][i] for i in player_ids]) == 10
             prob += pulp.lpSum([team_var[a][b][i] for i in player_ids]) == 5
-            
-            prob +=  pulp.lpSum([positions['pos_1'][i] * team_var[a][b][i] for i in player_ids]) >= 2
-            prob +=  pulp.lpSum([positions['pos_1'][i] * team_var[a][b][i] for i in player_ids]) <= 3
-            prob +=  pulp.lpSum([positions['pos_1'][i] * squad_var[a][b][i] for i in player_ids]) == 5
+
+            prob += (
+                pulp.lpSum(
+                    [positions["pos_1"][i] * team_var[a][b][i] for i in player_ids]
+                )
+                >= 2
+            )
+            prob += (
+                pulp.lpSum(
+                    [positions["pos_1"][i] * team_var[a][b][i] for i in player_ids]
+                )
+                <= 3
+            )
+            prob += (
+                pulp.lpSum(
+                    [positions["pos_1"][i] * squad_var[a][b][i] for i in player_ids]
+                )
+                == 5
+            )
 
             if day_solve == False:
-                prob +=  pulp.lpSum([data['now_cost'][i] * squad_var[a][b][i] for i in player_ids]) <= money
-            
+                prob += (
+                    pulp.lpSum(
+                        [data["now_cost"][i] * squad_var[a][b][i] for i in player_ids]
+                    )
+                    <= money
+                )
+
             for team in teams:
-                prob +=  pulp.lpSum([teams[team][i] * squad_var[a][b][i] for i in player_ids]) <= 2
-            
+                prob += (
+                    pulp.lpSum(
+                        [teams[team][i] * squad_var[a][b][i] for i in player_ids]
+                    )
+                    <= 2
+                )
+
             for i in player_ids:
                 prob += team_var[a][b][i] <= squad_var[a][b][i]
                 prob += cap_var[a][b][i] <= team_var[a][b][i]
-        
+
     if day_solve == False:
         # Track transfers across days and weeks
         for a in week_day_dict.keys():
             for b in week_day_dict[a]:
                 for i in player_ids:
                     # Transfer event: 1 if the player was added or removed on this day, 0 otherwise
-                    
+
                     # Transfer check within the same week (compare with the previous day in the same week)
                     if a == current_week and b == current_day and wildcard == True:
                         prob += transfer_var[a][b][i] == 0
                     elif a == current_week and b == current_day and wildcard == False:
-                        prob += transfer_var[a][b][i] >= squad_var[a][b][i] - in_team_flag[i]
+                        prob += (
+                            transfer_var[a][b][i]
+                            >= squad_var[a][b][i] - in_team_flag[i]
+                        )
                     elif b > 1:
                         current_index = week_day_dict[a].index(b)
                         previous_day = week_day_dict[a][current_index - 1]
-                        prob += transfer_var[a][b][i] >= squad_var[a][b][i] - squad_var[a][previous_day][i]
+                        prob += (
+                            transfer_var[a][b][i]
+                            >= squad_var[a][b][i] - squad_var[a][previous_day][i]
+                        )
                     else:
                         # For the first day of the new week, compare with the last day of the previous week
                         if a > current_week:
-                            last_day_of_prev_week = max(week_day_dict[a-1])
-                            prob += transfer_var[a][b][i] >= squad_var[a][b][i] - squad_var[a-1][last_day_of_prev_week][i]
+                            last_day_of_prev_week = max(week_day_dict[a - 1])
+                            prob += (
+                                transfer_var[a][b][i]
+                                >= squad_var[a][b][i]
+                                - squad_var[a - 1][last_day_of_prev_week][i]
+                            )
                         else:
                             # For the very first week, no transfers should have occurred before
                             prob += transfer_var[a][b][i] == 0
-                        
+
             if a > current_week:
-                prob += pulp.lpSum([transfer_var[a][b][i] for b in week_day_dict[a] for i in player_ids]) <= 2
+                prob += (
+                    pulp.lpSum(
+                        [
+                            transfer_var[a][b][i]
+                            for b in week_day_dict[a]
+                            for i in player_ids
+                        ]
+                    )
+                    <= 2
+                )
             else:
-                prob += pulp.lpSum([transfer_var[a][b][i] for b in week_day_dict[a] for i in player_ids]) <= transfers_left
-    
+                prob += (
+                    pulp.lpSum(
+                        [
+                            transfer_var[a][b][i]
+                            for b in week_day_dict[a]
+                            for i in player_ids
+                        ]
+                    )
+                    <= transfers_left
+                )
+
     for i in locked:
         prob += squad_var[current_week][current_day][i] == 1
-            
+
     if wildcard == False and day_solve == False:
-        prob += pulp.lpSum([squad_var[current_week][current_day][i] for i in in_team]) >= 8
-    
-    prob += pulp.lpSum([squad_var[current_week][current_day][i] for i in gd_banned]) == 0
-    
+        prob += (
+            pulp.lpSum([squad_var[current_week][current_day][i] for i in in_team]) >= 8
+        )
+
+    prob += (
+        pulp.lpSum([squad_var[current_week][current_day][i] for i in gd_banned]) == 0
+    )
+
     prob.solve(pulp.HiGHS(timeLimit=max_time, gapRel=gap))
     print("Score: ", pulp.value(prob.objective))
     print("Status: ", pulp.LpStatus[prob.status])
-    
-    # Create Output Excel
-    
-    output = data[['name', 'now_cost']].reset_index()
-    
-    squad = {i: {j: {} for j in week_day_dict[i]} for i in week_day_dict.keys()}
-    team = {i: {j: {} for j in week_day_dict[i]} for i in week_day_dict.keys()}
-    cap = {i: {j: {} for j in week_day_dict[i]} for i in week_day_dict.keys()}
-            
+
+    output = data[["name", "now_cost", "element_type"]].reset_index()
+
+    combined_df = output.copy()
+    combined_df["current"] = combined_df["id"].map(in_team_flag)
+
+    ev_mapping = {}
     for a in week_day_dict.keys():
         for b in week_day_dict[a]:
-            for i in player_ids:
-                squad[a][b][i] = round(squad_var[a][b][i].varValue)
-                team[a][b][i] = round(team_var[a][b][i].varValue)
-                cap[a][b][i] = round(cap_var[a][b][i].varValue)
-    
-    flattened_dict = {}
+            gw_day_key = f"Gameweek {a} - Day {b}"
+            if gw_day_key in data.columns:
+                ev_mapping[(a, b)] = gw_day_key
 
-    for outer_key, inner_dict in squad.items():
-        for inner_key, value_dict in inner_dict.items():
-            new_key = f"{outer_key}_{inner_key}"
-            for value_key, value in value_dict.items():
-                if value_key not in flattened_dict:
-                    flattened_dict[value_key] = {}
-                flattened_dict[value_key][new_key] = value
+    for a in week_day_dict.keys():
+        for b in week_day_dict[a]:
+            day_str = f"{a}_{b}"
+            # Add squad columns (1 if in squad, 0 otherwise)
+            combined_df[f"squad_{day_str}"] = combined_df["id"].apply(
+                lambda x: 1 if round(squad_var[a][b][x].varValue) == 1 else 0
+            )
+            # Add team columns (1 if in team, 0 if benched)
+            combined_df[f"team_{day_str}"] = combined_df["id"].apply(
+                lambda x: 1 if round(team_var[a][b][x].varValue) == 1 else 0
+            )
+            # Add captain columns (1 if captain, 0 otherwise)
+            combined_df[f"cap_{day_str}"] = combined_df["id"].apply(
+                lambda x: 1 if round(cap_var[a][b][x].varValue) == 1 else 0
+            )
 
-  
-    squad_df = pd.DataFrame(flattened_dict)
-    squad_df = squad_df.T
-    squad_df.reset_index(inplace=True)
-    squad_df.rename(columns={'index': 'id'}, inplace=True)
-    squad_df = pd.merge(output, squad_df, on=['id'], how='right')
-    squad_df = squad_df[squad_df.iloc[:,3:].eq(1).any(axis=1)]  
-    squad_df['current'] = squad_df['id'].map(in_team_flag)
-    
-    flattened_dict = {}
+            ev_key = (a, b)
+            if ev_key in ev_mapping:
+                ev_col = ev_mapping[ev_key]
+                combined_df[f"xPts_{day_str}"] = data[ev_col].reset_index()[
+                    f"Gameweek {a} - Day {b}"
+                ]
 
-    for outer_key, inner_dict in team.items():
-        for inner_key, value_dict in inner_dict.items():
-            new_key = f"{outer_key}_{inner_key}"
-            for value_key, value in value_dict.items():
-                if value_key not in flattened_dict:
-                    flattened_dict[value_key] = {}
-                flattened_dict[value_key][new_key] = value
+    squad_columns = [col for col in combined_df.columns if col.startswith("squad_")]
+    combined_df = combined_df[combined_df[squad_columns].eq(1).any(axis=1)]
 
-  
-    team_df = pd.DataFrame(flattened_dict)
-    team_df = team_df.T
-    team_df.reset_index(inplace=True)
-    team_df.rename(columns={'index': 'id'}, inplace=True)
-    team_df = pd.merge(output, team_df, on=['id'], how='right')
-    team_df = team_df[team_df.iloc[:,3:].eq(1).any(axis=1)]  
-    
-    flattened_dict = {}
-
-    for outer_key, inner_dict in cap.items():
-        for inner_key, value_dict in inner_dict.items():
-            new_key = f"{outer_key}_{inner_key}"
-            for value_key, value in value_dict.items():
-                if value_key not in flattened_dict:
-                    flattened_dict[value_key] = {}
-                flattened_dict[value_key][new_key] = value
-
-  
-    cap_df = pd.DataFrame(flattened_dict)
-    cap_df = cap_df.T
-    cap_df.reset_index(inplace=True)
-    cap_df.rename(columns={'index': 'id'}, inplace=True)
-    cap_df = pd.merge(output, cap_df, on=['id'], how='right')
-    cap_df = cap_df[cap_df.iloc[:,3:].eq(1).any(axis=1)]  
-    
     time_now = datetime.datetime.now()
     stamp = time_now.strftime("%Y-%m-%d_%H-%M-%S")
 
-    writer = pd.ExcelWriter(f'../output/NBA_Squad_{stamp}.xlsx', engine = 'xlsxwriter')
-    squad_df.to_excel(writer, sheet_name = 'Squad', index=False)
-    team_df.to_excel(writer, sheet_name = 'Team', index=False)
-    cap_df.to_excel(writer, sheet_name = 'Cap', index=False)
+    writer = pd.ExcelWriter(f"../output/NBA_Squad_{stamp}.xlsx", engine="xlsxwriter")
+    combined_df.to_excel(writer, sheet_name="Team_Plan", index=False)
     writer.close()
     print(f"Squad and Transfer Plan output to NBA_Squad_{stamp}.xlsx")
 
     sell_summary = []
     buy_summary = []
     team_summary = dict()
+    bench_summary = dict()
 
-    # Find line-ups for every week, highlighting captains where necessary
     for day in week_day_list:
-        day_str = f'{day[0]}_{day[1]}'
-        day_cap = cap_df.loc[cap_df[day_str] == 1]['name'].to_list()
-        day_team = team_df.loc[team_df[day_str] == 1]['name'].to_list()
-        if day_cap:
-            day_team = [player + " (C)" if player == day_cap[0] else player for player in day_team]
-        team_summary[day_str] = day_team
+        a, b = day[0], day[1]
+        day_str = f"{a}_{b}"
+        gw_day_str = f"Gameweek {a} - Day {b}"
 
-    #Find current gw transfers
+        day_team_df = combined_df[combined_df[f"team_{day_str}"] == 1].copy()
+        day_bench_df = combined_df[
+            (combined_df[f"squad_{day_str}"] == 1)
+            & (combined_df[f"team_{day_str}"] == 0)
+        ].copy()
+
+        if gw_day_str in data.columns:
+            day_team_df["display_name"] = day_team_df.apply(
+                lambda row: (
+                    f"{row['name']}({data.loc[row['id'], gw_day_str]:.2f})"
+                    if not pd.isna(data.loc[row["id"], gw_day_str])
+                    else row["name"]
+                ),
+                axis=1,
+            )
+
+            day_bench_df["display_name"] = day_bench_df.apply(
+                lambda row: (
+                    f"{row['name']}({data.loc[row['id'], gw_day_str]:.2f})"
+                    if not pd.isna(data.loc[row["id"], gw_day_str])
+                    else row["name"]
+                ),
+                axis=1,
+            )
+        else:
+            day_team_df["display_name"] = day_team_df["name"]
+            day_bench_df["display_name"] = day_bench_df["name"]
+
+        captain_ids = combined_df[combined_df[f"cap_{day_str}"] == 1]["id"].tolist()
+        if captain_ids:
+            day_team_df["display_name"] = day_team_df.apply(
+                lambda row: (
+                    f"{row['display_name']} (C)"
+                    if row["id"] in captain_ids
+                    else row["display_name"]
+                ),
+                axis=1,
+            )
+
+        team_summary[day_str] = day_team_df["display_name"].tolist()
+        bench_summary[day_str] = day_bench_df["display_name"].tolist()
+
+    # current gws
+    first_gw_day = f"{current_week}_{current_day}"
+    first_squad_col = f"squad_{first_gw_day}"
+
     print()
-    print(squad_df.columns[3] + ": ")
-    for i in range(len(squad_df)):
-        if squad_df.iloc[i,len(squad_df.columns)-1] != squad_df.iloc[i,3]:
-            if squad_df.iloc[i,len(squad_df.columns)-1] == 1:
-                print("Sell: " + squad_df.iloc[i,1] + ", Price: " + str(squad_df.iloc[i,2]))
-                sell_summary.append(str(squad_df.iloc[i,1]))
+    print(f"{first_gw_day}: ")
+    for _, row in combined_df.iterrows():
+        if row["current"] != row[first_squad_col]:
+            if row["current"] == 1:
+                print(f"Sell: {row['name']}, Price: {row['now_cost']}")
+                sell_summary.append(row["name"])
             else:
-                print("Buy: " + squad_df.iloc[i,1] + ", Price: " + str(squad_df.iloc[i,2]))
-                buy_summary.append(str(squad_df.iloc[i,1]))
-    print("Line-up: " + ", ".join(team_summary[squad_df.columns[3]]))
+                print(f"Buy: {row['name']}, Price: {row['now_cost']}")
+                buy_summary.append(row["name"])
+
+    print("Line-up: ")
+    front_court = []
+    back_court = []
+    for _, row in combined_df.iterrows():
+        if row[f"team_{first_gw_day}"] == 1:
+            ev_col = f"Gameweek {current_week} - Day {current_day}"
+            player_name = f"{row['name']}({data.loc[row['id'], ev_col]:.2f})"
+            if row[f"cap_{first_gw_day}"] == 1:
+                player_name += " (C)"
+            if row["element_type"] == 2:
+                front_court.append(player_name)
+            else:
+                back_court.append(player_name)
+
+    print("\t" + ", ".join(front_court))
+    print("\t" + ", ".join(back_court) + "\n")
+
+    print("Benched: \n" + "\t" + ", ".join(bench_summary[first_gw_day]) + "\n")
+
+    day_xPts = 0
+    for _, row in combined_df.iterrows():
+        if row[f"team_{first_gw_day}"] == 1:
+            ev_col = f"Gameweek {current_week} - Day {current_day}"
+            if row[f"cap_{first_gw_day}"] == 1:
+                day_xPts += 2 * data.loc[row["id"], ev_col]
+            else:
+                day_xPts += data.loc[row["id"], ev_col]
+
+    print(f"Cumulative xPts: {day_xPts:.2f}")
     print()
 
-    #Find future gw transfers
-    for z in range(4, (len(squad_df.columns))-1):
-        print(squad_df.columns[z] + ": ")
-        for i in range(len(squad_df)):
-            if squad_df.iloc[i,z-1] != squad_df.iloc[i,z]:
-                if squad_df.iloc[i,z-1] == 1:
-                    print("Sell: " + squad_df.iloc[i,1] + ", Price: " + str(squad_df.iloc[i,2]))
+    # future gws
+    squad_day_cols = [col for col in combined_df.columns if col.startswith("squad_")]
+    squad_day_cols.sort()
+
+    for i in range(1, len(squad_day_cols)):
+        current_day = squad_day_cols[i].replace("squad_", "")
+        prev_day = squad_day_cols[i - 1].replace("squad_", "")
+
+        print(f"{current_day} : ")
+        for _, row in combined_df.iterrows():
+            if row[squad_day_cols[i - 1]] != row[squad_day_cols[i]]:
+                if row[squad_day_cols[i - 1]] == 1:
+                    print(f"Sell: {row['name']}, Price: {row['now_cost']}")
                 else:
-                    print("Buy: " + squad_df.iloc[i,1] + ", Price: " + str(squad_df.iloc[i,2]))
-        print("Line-up: " + ", ".join(team_summary[squad_df.columns[z]]))
+                    print(f"Buy: {row['name']}, Price: {row['now_cost']}")
+        print("Line-up: ")
+        front_court = []
+        back_court = []
+        for _, row in combined_df.iterrows():
+            if row[f"team_{current_day}"] == 1:
+                ev_col = f"Gameweek {current_day.split('_')[0]} - Day {current_day.split('_')[1]}"
+                player_name = f"{row['name']}({data.loc[row['id'], ev_col]:.2f})"
+                if row[f"cap_{current_day}"] == 1:
+                    player_name += " (C)"
+                if row["element_type"] == 2:
+                    front_court.append(player_name)
+                else:
+                    back_court.append(player_name)
+
+        print("\t" + ", ".join(front_court))
+
+        print("\t" + ", ".join(back_court) + "\n")
+
+        print("Benched: \n " + "\t" + ", ".join(bench_summary[current_day]) + "\n")
+
+        day_xPts = 0
+        for _, row in combined_df.iterrows():
+            if row[f"team_{current_day}"] == 1:
+                ev_col = f"Gameweek {current_day.split('_')[0]} - Day {current_day.split('_')[1]}"
+                if row[f"cap_{current_day}"] == 1:
+                    day_xPts += 2 * data.loc[row["id"], ev_col]
+                else:
+                    day_xPts += data.loc[row["id"], ev_col]
+
+        print(f"Cumulative xPts: {day_xPts:.2f}")
         print()
 
-    #Print summary
     print()
-    print("Summary: ")
-    if buy_summary==[]:
-        print("Roll")
-    else:
-        for i in range(len(buy_summary)):
-            print("Buy: " + str(buy_summary[i]))
-            print("Sell: " + str(sell_summary[i]))
-    print()
-    
