@@ -1,8 +1,6 @@
 import pandas as pd
 import pulp
 import re
-import xlsxwriter
-import uuid
 import datetime
 
 
@@ -33,7 +31,10 @@ def nba_solver(
     data = data.set_index("id")
 
     player_ids = data.index
-    point_columns = data.columns[11:]
+    point_columns = [
+        col for col in data.columns if re.match(r"^Gameweek \d+ - Day \d+$", col)
+    ]
+    print(f"Found {len(point_columns)} point columns: {point_columns}")
 
     # create dictionary of gameweeks + game days
     week_day_list = []
@@ -85,14 +86,13 @@ def nba_solver(
     base_penalty = transfer_penalty
 
     penalty_dict = {
-        week: {day: base_penalty[day] for day in days if day in base_penalty}
+        week: {day: base_penalty[str(day)] for day in str(days) if day in base_penalty}
         for week, days in week_day_dict.items()
     }
 
     # Create variables for each gameweek + gameday IN ORDER accounting for varying week lengths
     for a in week_day_dict.keys():
         for b in week_day_dict[a]:
-
             position = None
             current_position = 0
 
@@ -127,10 +127,10 @@ def nba_solver(
     prob = pulp.LpProblem("Optimiser", pulp.LpMaximize)
 
     # Objective Function
-    if day_solve == True:
+    if day_solve:
         prob += pulp.lpSum(
             [
-                ((points[a][b][i] * team_var[a][b][i]))
+                (points[a][b][i] * team_var[a][b][i])
                 for a in week_day_dict.keys()
                 for b in week_day_dict[a]
                 for i in player_ids
@@ -142,7 +142,11 @@ def nba_solver(
                 (
                     (points[a][b][i] * team_var[a][b][i])
                     + (points[a][b][i] * cap_var[a][b][i])
-                    - (transfer_var[a][b][i] * penalty_dict[a][b] * decay_dict[a][b])
+                    - (
+                        transfer_var[a][b][i]
+                        * penalty_dict[a][str(b)]
+                        * decay_dict[a][b]
+                    )
                 )
                 for a in week_day_dict.keys()
                 for b in week_day_dict[a]
@@ -151,8 +155,7 @@ def nba_solver(
         )
 
     for a in week_day_dict.keys():
-
-        if cap_used == True and a == current_week:
+        if cap_used and a == current_week:
             prob += (
                 pulp.lpSum(
                     [cap_var[a][b][i] for b in week_day_dict[a] for i in player_ids]
@@ -190,7 +193,7 @@ def nba_solver(
                 == 5
             )
 
-            if day_solve == False:
+            if not day_solve:
                 prob += (
                     pulp.lpSum(
                         [data["now_cost"][i] * squad_var[a][b][i] for i in player_ids]
@@ -210,7 +213,7 @@ def nba_solver(
                 prob += team_var[a][b][i] <= squad_var[a][b][i]
                 prob += cap_var[a][b][i] <= team_var[a][b][i]
 
-    if day_solve == False:
+    if not day_solve:
         # Track transfers across days and weeks
         for a in week_day_dict.keys():
             for b in week_day_dict[a]:
@@ -218,9 +221,9 @@ def nba_solver(
                     # Transfer event: 1 if the player was added or removed on this day, 0 otherwise
 
                     # Transfer check within the same week (compare with the previous day in the same week)
-                    if a == current_week and b == current_day and wildcard == True:
+                    if a == current_week and b == current_day and wildcard:
                         prob += transfer_var[a][b][i] == 0
-                    elif a == current_week and b == current_day and wildcard == False:
+                    elif a == current_week and b == current_day and not wildcard:
                         prob += (
                             transfer_var[a][b][i]
                             >= squad_var[a][b][i] - in_team_flag[i]
@@ -271,7 +274,7 @@ def nba_solver(
     for i in locked:
         prob += squad_var[current_week][current_day][i] == 1
 
-    if wildcard == False and day_solve == False:
+    if not wildcard and not day_solve:
         prob += (
             pulp.lpSum([squad_var[current_week][current_day][i] for i in in_team]) >= 8
         )
@@ -434,7 +437,6 @@ def nba_solver(
 
     for i in range(1, len(squad_day_cols)):
         current_day = squad_day_cols[i].replace("squad_", "")
-        prev_day = squad_day_cols[i - 1].replace("squad_", "")
 
         print(f"{current_day} : ")
         for _, row in combined_df.iterrows():
