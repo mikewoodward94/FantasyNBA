@@ -6,37 +6,70 @@ import re
 import time
 
 from solver import nba_solver
+from pathlib import Path
 
-# EV Settings
-decay = 0.97
-home = 1.02
-away = 0.98
-value_cutoff = 0.25
-transfer_penalty = {1: 18, 2: 12, 3: 6, 4: 6, 5: 0, 6: 0, 7: 0}
+PROJECT_ROOT = Path(__file__).parent.parent
 
-# Gameday Range
-first_gd = 3
-first_gw = 19
-final_gd = 7
-final_gw = 21
+DATA_DIR = PROJECT_ROOT / "data"
 
-# Player Settings
-locked = []
-banned = []
-gd_banned = []
-gds_to_zero = ["Gameweek 20 - Day 1"]
-ids_to_zero = [476]
 
-# Chip Settings
-wildcard = False
-allstar = False
-day_solve = False
-allstar_day = "Gameweek 20 - Day 1"
+def load_settings():
+    with open(DATA_DIR / "settings.json") as f:
+        options = json.load(f)
+    return options
 
-# Solver Settings
-max_time = 3600
-gap = 0.0
-info_source = "API"
+
+settings = load_settings()
+
+(
+    info_source,
+    value_cutoff,
+    decay,
+    home,
+    away,
+    first_gd,
+    first_gw,
+    final_gw,
+    final_gd,
+    locked,
+    banned,
+    gd_banned,
+    ids_to_zero,
+    gds_to_zero,
+    wildcard,
+    allstar,
+    day_solve,
+    allstar_day,
+    gap,
+    max_time,
+    transfer_penalty,
+    team_data,
+    team_id,
+) = (
+    settings["info_source"],
+    settings["value_cutoff"],
+    settings["decay"],
+    settings["home"],
+    settings["away"],
+    settings["first_gd"],
+    settings["first_gw"],
+    settings["final_gw"],
+    settings["final_gd"],
+    settings["locked"],
+    settings["banned"],
+    settings["gd_banned"],
+    settings["ids_to_zero"],
+    settings["gds_to_zero"],
+    settings["wildcard"],
+    settings["allstar"],
+    settings["day_solve"],
+    settings["allstar_day"],
+    settings["gap"],
+    settings["max_time"],
+    settings.get("transfer_penalty", {}),
+    settings["team_data"],
+    settings["team_id"],
+)
 
 
 def main(
@@ -131,8 +164,8 @@ def main(
 
     player_data = apply_decay(player_data, decay)
 
-    if allstar == True:
-        if day_solve == True:
+    if allstar:
+        if day_solve:
             player_data = player_data[
                 [
                     "id",
@@ -179,7 +212,6 @@ def main(
 
 
 def get_player_info():
-
     url = "https://nbafantasy.nba.com/api/bootstrap-static/"
     r = requests.get(url)
     json = r.json()
@@ -202,7 +234,6 @@ def get_player_info():
 
 
 def get_fixture_info(player_info):
-
     fixtures = []
 
     for i in player_info["id"]:
@@ -228,11 +259,10 @@ def get_fixture_info(player_info):
 
 
 def clean_fixture_info(fixture_info):
-
     fixture_info["opp_team"] = np.where(
-        fixture_info["is_home"] == True, fixture_info["team_a"], fixture_info["team_h"]
+        fixture_info["is_home"], fixture_info["team_a"], fixture_info["team_h"]
     )
-    fixture_info["location"] = np.where(fixture_info["is_home"] == True, "home", "away")
+    fixture_info["location"] = np.where(fixture_info["is_home"], "home", "away")
     fixture_info = fixture_info[["id", "event_name", "location", "opp_team"]]
     fixture_info = fixture_info.dropna()
 
@@ -240,7 +270,6 @@ def clean_fixture_info(fixture_info):
 
 
 def read_hashtag():
-
     data = pd.read_csv("../data/hashtag_season.csv")
     data = data[["PLAYER", "PTS", "TREB", "AST", "STL", "BLK", "TO"]]
 
@@ -256,7 +285,6 @@ def read_hashtag():
 
 
 def read_fixtures(first_gd, first_gw, final_gw, final_gd):
-
     fixtures = pd.read_csv("../Data/fixtures.csv")
     fixtures["gameweek"] = (
         fixtures["event_name"].str.findall("(\d+)").str[0].astype(int)
@@ -295,7 +323,6 @@ def read_fixtures(first_gd, first_gw, final_gw, final_gd):
 
 
 def read_team_def_strength():
-
     data = pd.read_csv("../Data/team_def_data_2425.csv")
     data_cols = ["PTS", "REB", "AST", "STL", "BLK", "TOV"]
 
@@ -319,7 +346,6 @@ def read_team_def_strength():
 
 
 def replace_with_value(player_data, location_dict, def_rating_dict):
-
     game_cols = player_data.columns[12:].to_list()
 
     for col in game_cols:
@@ -340,7 +366,6 @@ def replace_values(lst, mapping):
 
 
 def transform_gameday(row, col):
-
     if not row[col]:
         return [0, 0]
 
@@ -359,12 +384,10 @@ def transform_gameday(row, col):
 
 
 def multiply_list(lst):
-
     return np.prod(lst)
 
 
 def apply_decay(player_data, decay_factor):
-
     week_day_list = []
     week_day_dict = {}
 
@@ -396,20 +419,20 @@ def apply_decay(player_data, decay_factor):
 
 
 def read_team_json():
+    if team_data == "json":
+        with open("../data/team.json") as f:
+            d = json.load(f)
 
-    with open("../data/team.json") as f:
-        d = json.load(f)
-
-        in_team = [pick["element"] for pick in d["picks"]]
-        in_team_sell_price = [
-            [pick["element"], pick["selling_price"]] for pick in d["picks"]
-        ]
-        cap_used = any(
-            chip["name"] == "phcapt" and chip["status_for_entry"] in ["played"]
-            for chip in d["chips"]
-        )
-        transfers_left = 2 - d["transfers"]["made"]
-        in_bank = d["transfers"]["bank"]
+            in_team = [pick["element"] for pick in d["picks"]]
+            in_team_sell_price = [
+                [pick["element"], pick["selling_price"]] for pick in d["picks"]
+            ]
+            cap_used = any(
+                chip["name"] == "phcapt" and chip["status_for_entry"] in ["played"]
+                for chip in d["chips"]
+            )
+            transfers_left = 2 - d["transfers"]["made"]
+            in_bank = d["transfers"]["bank"]
 
     return (in_team, in_team_sell_price, cap_used, transfers_left, in_bank)
 
