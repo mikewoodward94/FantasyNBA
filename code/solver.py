@@ -2,6 +2,7 @@ import pandas as pd
 import pulp
 import re
 import datetime
+import numpy as np
 
 
 def nba_solver(
@@ -350,22 +351,22 @@ def nba_solver(
         ].copy()
 
         if gw_day_str in data.columns:
-            day_team_df["display_name"] = day_team_df.apply(
-                lambda row: (
-                    f"{row['name']}({data.loc[row['id'], gw_day_str]:.2f})"
-                    if not pd.isna(data.loc[row["id"], gw_day_str])
-                    else row["name"]
-                ),
-                axis=1,
+            points_lookup = data[gw_day_str]
+
+            team_points = day_team_df["id"].map(points_lookup)
+
+            day_team_df["display_name"] = np.where(
+                team_points.isna(),
+                day_team_df["name"],
+                day_team_df["name"] + "(" + team_points.round(2).astype(str) + ")",
             )
 
-            day_bench_df["display_name"] = day_bench_df.apply(
-                lambda row: (
-                    f"{row['name']}({data.loc[row['id'], gw_day_str]:.2f})"
-                    if not pd.isna(data.loc[row["id"], gw_day_str])
-                    else row["name"]
-                ),
-                axis=1,
+            bench_points = day_bench_df["id"].map(points_lookup)
+
+            day_bench_df["display_name"] = np.where(
+                bench_points.isna(),
+                day_bench_df["name"],
+                day_bench_df["name"] + "(" + bench_points.round(2).astype(str) + ")",
             )
         else:
             day_team_df["display_name"] = day_team_df["name"]
