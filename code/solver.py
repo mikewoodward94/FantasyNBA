@@ -20,6 +20,10 @@ def nba_solver(
     gap,
     max_time,
     transfer_penalty,
+    first_gw,
+    first_gd,
+    final_gw,
+    final_gd,
 ):
     print("Setting up and starting solve")
     team_value = data[data["id"].isin(in_team)]["now_cost"].sum()
@@ -36,6 +40,23 @@ def nba_solver(
         col for col in data.columns if re.match(r"^Gameweek \d+ - Day \d+$", col)
     ]
     print(f"Found {len(point_columns)} point columns: {point_columns}")
+
+    filtered_point_columns = []
+    for col in point_columns:
+        week = int(re.findall(r"(\d+)", col)[0])
+        day = int(re.findall(r"(\d+)", col)[1])
+
+        in_range = True
+        if week < first_gw or (week == first_gw and day < first_gd):
+            in_range = False
+        if week > final_gw or (week == final_gw and day > final_gd):
+            in_range = False
+
+        if in_range:
+            filtered_point_columns.append(col)
+
+    point_columns = filtered_point_columns
+    print(f"Solving for {len(point_columns)} columns: {point_columns}")
 
     # create dictionary of gameweeks + game days
     week_day_list = []
@@ -322,7 +343,7 @@ def nba_solver(
                 combined_df[f"xPts_{day_str}"] = data[ev_col].reset_index()[
                     f"Gameweek {a} - Day {b}"
                 ]
-
+    full_player_df = combined_df.copy()
     squad_columns = [col for col in combined_df.columns if col.startswith("squad_")]
     combined_df = combined_df[combined_df[squad_columns].eq(1).any(axis=1)]
 
@@ -392,13 +413,13 @@ def nba_solver(
 
     print()
     print(f"{first_gw_day}: ")
-    for _, row in combined_df.iterrows():
+    for _, row in full_player_df.iterrows():
         if row["current"] != row[first_squad_col]:
             if row["current"] == 1:
-                print(f"Sell: {row['name']}, Price: {row['now_cost']}")
+                print(f"Sell: {row['name']}, Price: {row['now_cost'] / 10}")
                 sell_summary.append(row["name"])
             else:
-                print(f"Buy: {row['name']}, Price: {row['now_cost']}")
+                print(f"Buy: {row['name']}, Price: {row['now_cost'] / 10}")
                 buy_summary.append(row["name"])
 
     print("Line-up: ")
@@ -443,9 +464,9 @@ def nba_solver(
         for _, row in combined_df.iterrows():
             if row[squad_day_cols[i - 1]] != row[squad_day_cols[i]]:
                 if row[squad_day_cols[i - 1]] == 1:
-                    print(f"Sell: {row['name']}, Price: {row['now_cost']}")
+                    print(f"Sell: {row['name']}, Price: {row['now_cost'] / 10}")
                 else:
-                    print(f"Buy: {row['name']}, Price: {row['now_cost']}")
+                    print(f"Buy: {row['name']}, Price: {row['now_cost'] / 10}")
         print("Line-up: ")
         front_court = []
         back_court = []
