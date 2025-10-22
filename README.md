@@ -14,6 +14,8 @@ You can find this here: https://nbafantasy.nba.com/api/my-team/{YOUR_ID}/
 
 You must be logged in, and you can find your ID in the url if you navigate to your gameday history.
 
+P.S. You can run a solve by just plugging in your id in the settings.json
+
 ### HiGHS
 This solver uses HiGHS, make sure you have it downloaded and included in Path.
 
@@ -33,7 +35,7 @@ Team defensive data in the repository is taken from the official NBA stats site 
 When you first run the code it will pull player information (Cost, Injury Status, etc) and Fixture information from the Fantasy NBA API, this also generates CSVs and you can change the setting "info_source" to be blank if you don't want to refresh these and save time.
 
 ## Settings
-You can find default settings in run_solve.py
+You can find default settings in data/settings.json
 ### EV Settings
 decay: How much EV is decayed by Game Day
 
@@ -66,9 +68,19 @@ day_solve: Choose to solve just the allstar day (True) or a normal solve ignorin
 
 allstar_day: The gameday that allstar chip is used on i.e. "Gameweek 20 - Day 1"
 
+gw_cap_used: Needed only if setting team_data as id, set as true if gameday captain already used for the current gw
+
 ### Solver Settings
 max_time: Max time in seconds to allow for solve.
 
 gap: Optimality Gap
 
 info_source: Default is "API", but make this blank if you just want it to pull from saved CSVs.
+
+team_data: Set as "json" if you prefer the team.json else stick to "id"
+
+team_id: Your team id can be derived your points page url or your rank history url
+
+ev_sheet: Set as true if you wish to the already created csv or have your own (ensure that it is in the data folder)
+
+
