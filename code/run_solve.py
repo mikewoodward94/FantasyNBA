@@ -221,6 +221,10 @@ def main(
         gap,
         max_time,
         transfer_penalty,
+        first_gw,
+        first_gd,
+        final_gw,
+        final_gd,
     )
 
 
