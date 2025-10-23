@@ -550,7 +550,7 @@ def read_team_json():
                 "chips": chips,
                 "picks": [],
                 "team_id": team_id,
-                "transfers": {"bank": itb, "limit": fts, "made": 0},
+                "transfers": {"bank": itb, "limit": 2, "made": fts},
             }
             for player_id, purchase_price in squad.items():
                 now_cost = next(x for x in static["elements"] if x["id"] == player_id)[
