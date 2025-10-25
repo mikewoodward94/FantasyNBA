@@ -525,6 +525,11 @@ def read_team_json():
             }
             gd1_url = f"{BASE_URL}/entry/{team_id}/event/1/picks/"
             gd1 = session.get(gd1_url).json()
+            if gd1 == {"detail": "Not found."}:
+                gd1_url = f"{BASE_URL}/entry/{team_id}/event/2/picks/"
+                gd1 = session.get(gd1_url).json()
+            else:
+                pass
             transfers_url = f"{BASE_URL}/entry/{team_id}/transfers/"
             transfers = session.get(transfers_url).json()[::-1]
             chips_url = f"{BASE_URL}/entry/{team_id}/history/"
@@ -532,8 +537,6 @@ def read_team_json():
             as_gds = [x["event"] for x in chips if x["name"] == "rich"]
             wc_gds = [x["event"] for x in chips if x["name"] == "wildcard"]
             squad = {x["element"]: start_prices[x["element"]] for x in gd1["picks"]}
-            made = gd1["entry_history"]["event_transfers"]
-            bank = gd1["entry_history"]["bank"]
             itb = 1000 - sum(squad.values())
             for t in transfers:
                 if t["event"] in as_gds:
@@ -544,13 +547,13 @@ def read_team_json():
                     squad[t["element_in"]] = t["element_in_cost"]
                 if t["element_out"]:
                     del squad[t["element_out"]]
-            my_data = {"picks": gd1["picks"], "transfers": {"bank": bank, "made": made}}
             fts = calculate_fts(transfers, next_gd, as_gds, wc_gds, gw_period)
+            made = 2 - fts
             my_data = {
                 "chips": chips,
                 "picks": [],
                 "team_id": team_id,
-                "transfers": {"bank": itb, "limit": 2, "made": fts},
+                "transfers": {"bank": itb, "limit": 2, "made": made},
             }
             for player_id, purchase_price in squad.items():
                 now_cost = next(x for x in static["elements"] if x["id"] == player_id)[
