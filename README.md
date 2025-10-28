@@ -4,7 +4,7 @@ EV Generator and Squad Solver for Fantasy NBA (Salary Cap Edition)
 Sign up and play here: https://nbafantasy.nba.com/
 
 ## Join My League!
-Click here to auto join: https://nbafantasy.nba.com/leagues/auto-join/dtbzi7
+Click here to auto join: https://nbafantasy.nba.com/leagues/auto-join/4qx9qw
 
 ## Important Instructions
 ### team.json
@@ -16,16 +16,24 @@ You must be logged in, and you can find your ID in the url if you navigate to yo
 
 P.S. You can run a solve by just plugging in your id in the settings.json
 
-### HiGHS
-This solver uses HiGHS, make sure you have it downloaded and included in Path.
-
-Can be downloaded here: https://github.com/JuliaBinaryWrappers/HiGHSstatic_jll.jl
-
+### Installing Requirements
+Please run the following to ensure that you have all prerequisite packages installed:
+```
+pip install -r requirements.txt
+```
 ### Running the Code
 
-After you've done this navigate to the code folder and run run_solve.py and it *should* all work.
+After you've done this navigate to the `code` folder: 
+```
+cd code
+```
+and run run_solve.py: 
+```
+python run_solve.py
+```
+and it *should* all work.
 
-EV and Solve will be found in the output folder following successful run.
+EV and Solve will be found in the `output` folder following successful run.
 
 ## Data
 Player data in the repository is taken from Hashtag Basketball (as of 6/2/25), if you'd like to update this you can replace the content in hashtag_Season.csv by copying and pasting from here: https://hashtagbasketball.com/fantasy-basketball-rankings
@@ -37,15 +45,15 @@ When you first run the code it will pull player information (Cost, Injury Status
 ## Settings
 You can find default settings in data/settings.json
 ### EV Settings
-decay: How much EV is decayed by Game Day
+`decay`: How much EV is decayed by Game Day
 
-home: Home advantage EV boost
+`home`: Home advantage EV boost
 
-away: Away disadvantage EV "boost"
+`away`: Away disadvantage EV "boost"
 
-value_cutoff: Average EV Divided by Player Cost threshold to be included in solve.
+`value_cutoff`: Average EV Divided by Player Cost threshold to be included in solve.
 
-transfer_penalty: Dictionary of EV penalty applied if transfer occurs on that Game Day.
+`transfer_penalty`: Dictionary of EV penalty applied if transfer occurs on that Game Day.
 
 ### Gameday Range
 Here you set the range of gamedays that you would like to solve between (inclusive).
@@ -53,34 +61,56 @@ Here you set the range of gamedays that you would like to solve between (inclusi
 I normally solve for 3 gameweeks at a time, which is usually 21 gamedays.
 
 ### Player Settings
-locked: List of IDs to lock in team
+`locked`: List of IDs to lock in team
 
-banned: List of IDs to ban from team
+`banned`: List of IDs to ban from team
 
-gd_banned: List of IDs to ban from team for only next Game Day
+`gd_banned`: List of IDs to ban from team for only next Game Day
+
+`gds_to_zero`: List of days to zero out for player(s) listed in `ids_to_zero`
+
+`ids_to_zero`:  List of player IDs to be zeroed out on specific days
+
+`booked_transfers` allows you to force future transactions during specific days. For instance, if you wish to transfer out Anthony Davis (ID: 134) in GW2 Day 2, use `booked_transfers": [{"gw": 2, "day":2, "transfer_out": 134}]`. If you have a the replacement in mind too, say Mark Williams (ID: 469), you can add his id in the same dict with the key "transfer_in". So it will be like `booked_transfers": [{"gw": 2, "day":2, "transfer_in":469, "transfer_out": 134}]`. Both transfer_in and transfer_out can be null (it's assumed null if not entered). They do not clash with iterations either and work along with your wc/allstar solves too.
 
 ### Chip Settings
-wildcard: Use wildcard (True or False)
+`use_wc`: list of GWs to use wildcard. Days need to be entered as week_day in strings so: `use_wc: ["2_3"]`  would imply a wc in GW2 Day 3. Can use multiple of them too, `use_wc: ["2_3", "2_5"]`
 
-allstar: Use allstar (True or False)
+`use_as`: list of GWs to use allstar in. Days need to be entered as week_day in strings so: `use_as: ["2_3"]`  would imply an as in GW2 Day 3. Can use multiple of them too, `use_as: ["2_3", "2_5"]`
 
-day_solve: Choose to solve just the allstar day (True) or a normal solve ignoring that day (False)
+`day_solve`: Choose to solve just the allstar day (True) or a normal solve ignoring that day (False)
 
-allstar_day: The gameday that allstar chip is used on i.e. "Gameweek 20 - Day 1"
-
-gw_cap_used: Needed only if setting team_data as id, set as true if gameday captain already used for the current gw
+`gw_cap_used`: Needed only if setting team_data as id, set as true if gameday captain already used for the current gw
 
 ### Solver Settings
-max_time: Max time in seconds to allow for solve.
+`num_iterations`:  number of different solutions to be generated, the criteria is controlled by `iteration_criteria`
 
-gap: Optimality Gap
+`iteration_criteria`: rule on separating what a different solution mean
+   - `this_day_transfer_in` will force to replace players to buy current day in each solution
+   - `this_day_transfer_out` will force to replace players to sell current day in each solution
+   - `this_day_transfer_in_out` will force to replace players to buy or sell current day in each solution
+   - `this_day_lineup` will force to replace at least N players in your lineup (only criteria which uses `iteration_difference`)
 
-info_source: Default is "API", but make this blank if you just want it to pull from saved CSVs.
+`iteration_difference`: number of players to be different
 
-team_data: Set as "json" if you prefer the team.json else stick to "id"
+`max_time`: Max time in seconds to allow for solve.
 
-team_id: Your team id can be derived your points page url or your rank history url
+`gap`: Optimality Gap
 
-ev_sheet: Set as true if you wish to the already created csv or have your own (ensure that it is in the data folder)
+`info_source`: Default is "API", but make this blank if you just want it to pull from saved CSVs.
 
+`team_data`: Set as "json" if you prefer the team.json else stick to "id"
+
+`team_id`: Your team id can be derived your points page url or your rank history url
+
+`ev_sheet`: Set as true if you wish to the already created csv or have your own (ensure that it is in the data folder)
+
+### Output
+`print_transfer_chip_summary`: whether you want the transfer chip summary to be printed to the screen (Gameweek 2 - Day 2: Roll, Gameweek 2 - Day 3: (Wildcard) PayerA -> PlayerB, ....)
+
+`print_squads`: whether you want the lineup and bench printed for each gameweek in your solution
+
+`print_result_table`: whether you want the result table printed to the screen after the solve has finished (the table with iter,buy,sell, chip, score columns)
+
+`export_excel`: if you wish for the solution to be saved as an excel sheet in `data/results` folder
 
