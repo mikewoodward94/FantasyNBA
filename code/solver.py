@@ -1,8 +1,13 @@
 import pandas as pd
-import pulp
+import sasoptpy as so  # type: ignore
+import highspy
 import re
-import datetime
-import numpy as np
+from pathlib import Path
+import os
+import time
+
+
+BINARY_THRESHOLD = 0.5
 
 
 def nba_solver(
@@ -10,7 +15,9 @@ def nba_solver(
     locked,
     banned,
     gd_banned,
-    wildcard,
+    use_wc,
+    use_as,
+    booked_transfers,
     day_solve,
     in_team,
     cap_used,
@@ -24,18 +31,40 @@ def nba_solver(
     first_gd,
     final_gw,
     final_gd,
+    iteration=0,
+    previous_solutions=None,
+    iteration_criteria="",
+    iteration_difference=1,
+    num_iterations=1,
 ):
-    print("Setting up and starting solve")
     team_value = data[data["id"].isin(in_team)]["now_cost"].sum()
     money = team_value + in_bank
     print(f"Money: {money}")
 
-    # remove banned players
-    data = data[~data["id"].isin(banned)]
+    pristine_player_ids = data["id"].tolist()
+    pristine_in_team_flag = {
+        id: 1 if id in in_team else 0 for id in pristine_player_ids
+    }
+    pristine_output_df = data[["id", "name", "now_cost", "element_type"]].copy()
+    pristine_output_df["current"] = pristine_output_df["id"].map(pristine_in_team_flag)
 
+    pristine_data_for_printing = data.copy()
+
+    data = data[~data["id"].isin(banned)]
     data = data.set_index("id")
 
-    player_ids = data.index
+    player_ids = data.index.tolist()
+    missing_players_in_solver = [pid for pid in in_team if pid not in player_ids]
+    if missing_players_in_solver:
+        print(
+            f"CRITICAL ERROR: The following players from 'in_team' are missing from the EV data (player_ids): {missing_players_in_solver}"
+        )
+        print(
+            "This is likely due to the 'value_cutoff' setting or an incomplete 'NBA_EV.csv' file."
+        )
+        print("The solver cannot continue as this will result in a 9-player team.")
+        raise ValueError(f"Missing players from in_team: {missing_players_in_solver}")
+
     point_columns = [
         col for col in data.columns if re.match(r"^Gameweek \d+ - Day \d+$", col)
     ]
@@ -56,7 +85,6 @@ def nba_solver(
             filtered_point_columns.append(col)
 
     point_columns = filtered_point_columns
-    print(f"Solving for {len(point_columns)} columns: {point_columns}")
 
     # create dictionary of gameweeks + game days
     week_day_list = []
@@ -78,7 +106,7 @@ def nba_solver(
     current_week = min(list(week_day_dict.keys()))
     current_day = min(list(week_day_dict[current_week]))
 
-    in_team_flag = {id: 1 if id in in_team else 0 for id in player_ids}
+    in_team_flag_for_solver = {id: 1 if id in in_team else 0 for id in player_ids}
 
     # create columns for team and position
     positions = pd.get_dummies(data, columns=["element_type"], prefix="pos")[
@@ -87,32 +115,36 @@ def nba_solver(
     teams = pd.get_dummies(data, columns=["team"], prefix="team")
     teams = teams.loc[:, teams.columns.str.startswith("team_")].astype(int)
 
-    # create dictionaries
-    points = {i: {j: {} for j in week_day_dict[i]} for i in week_day_dict.keys()}
-    squad_var = {i: {j: {} for j in week_day_dict[i]} for i in week_day_dict.keys()}
-    team_var = {i: {j: {} for j in week_day_dict[i]} for i in week_day_dict.keys()}
-    cap_var = {i: {j: {} for j in week_day_dict[i]} for i in week_day_dict.keys()}
-    transfer_var = {i: {j: {} for j in week_day_dict[i]} for i in week_day_dict.keys()}
+    problem_name = "nba_optimizer"
+    model = so.Model(name=problem_name)
 
-    # apply decay to transfer penalties
-    decay_factor = decay
-    cumulative_index = 0
+    # flattening
+    all_week_days = [(w, d) for w in week_day_dict.keys() for d in week_day_dict[w]]
 
-    decay_dict = {}
-    for week, days in sorted(week_day_dict.items()):
-        decay_dict[week] = {}
-        for day in days:
-            decay_dict[week][day] = decay_factor**cumulative_index
-            cumulative_index += 1
+    # sasoptpy variables
+    squad_var = {}
+    team_var = {}
+    cap_var = {}
+    transfer_var = {}
 
-    base_penalty = transfer_penalty
+    for i in player_ids:
+        for w, d in all_week_days:
+            squad_var[i, w, d] = model.add_variable(
+                name=f"squad_{i}_{w}_{d}", vartype=so.binary
+            )
+            team_var[i, w, d] = model.add_variable(
+                name=f"team_{i}_{w}_{d}", vartype=so.binary
+            )
+            cap_var[i, w, d] = model.add_variable(
+                name=f"cap_{i}_{w}_{d}", vartype=so.binary
+            )
+            transfer_var[i, w, d] = model.add_variable(
+                name=f"transfer_{i}_{w}_{d}", vartype=so.binary
+            )
 
-    penalty_dict = {
-        week: {day: base_penalty[str(day)] for day in str(days) if day in base_penalty}
-        for week, days in week_day_dict.items()
-    }
-
-    # Create variables for each gameweek + gameday IN ORDER accounting for varying week lengths
+    # points dict
+    points = {}
+    position_map = {}
     for a in week_day_dict.keys():
         for b in week_day_dict[a]:
             position = None
@@ -130,373 +162,631 @@ def nba_solver(
                 if position is not None:
                     break
 
+            position_map[(a, b)] = position
             for i in player_ids:
-                points[a][b][i] = data[point_columns[position - 1]][i]
-                squad_var[a][b][i] = pulp.LpVariable(
-                    "gwk" + str(a) + "gdy" + str(b) + "x" + str(i), cat="Binary"
-                )
-                team_var[a][b][i] = pulp.LpVariable(
-                    "gwk" + str(a) + "gdy" + str(b) + "y" + str(i), cat="Binary"
-                )
-                cap_var[a][b][i] = pulp.LpVariable(
-                    "gwk" + str(a) + "gdy" + str(b) + "c" + str(i), cat="Binary"
-                )
-                transfer_var[a][b][i] = pulp.LpVariable(
-                    f"transfer_gwk{a}_gdy{b}_x{i}", cat="Binary"
-                )
+                points[(i, a, b)] = data[point_columns[position - 1]][i]
 
-    # Start Problem
-    prob = pulp.LpProblem("Optimiser", pulp.LpMaximize)
+    # apply decay to transfer penalties
+    decay_factor = decay
+    cumulative_index = 0
 
-    # Objective Function
+    decay_dict = {}
+    for week, days in sorted(week_day_dict.items()):
+        decay_dict[week] = {}
+        for day in days:
+            decay_dict[week][day] = decay_factor**cumulative_index
+            cumulative_index += 1
+
+    base_penalty = transfer_penalty
+    penalty_dict = {
+        week: {
+            day: base_penalty[str(day)]
+            for day in week_day_dict[week]
+            if str(day) in base_penalty
+        }
+        for week in week_day_dict.keys()
+    }
+
+    # Main stuff
     if day_solve:
-        prob += pulp.lpSum(
-            [
-                (points[a][b][i] * team_var[a][b][i])
-                for a in week_day_dict.keys()
-                for b in week_day_dict[a]
-                for i in player_ids
-            ]
+        objective_expr = so.expr_sum(
+            points[(i, a, b)] * team_var[i, a, b]
+            for a in week_day_dict.keys()
+            for b in week_day_dict[a]
+            for i in player_ids
         )
     else:
-        prob += pulp.lpSum(
-            [
-                (
-                    (points[a][b][i] * team_var[a][b][i])
-                    + (points[a][b][i] * cap_var[a][b][i])
-                    - (
-                        transfer_var[a][b][i]
-                        * penalty_dict[a][str(b)]
-                        * decay_dict[a][b]
-                    )
-                )
-                for a in week_day_dict.keys()
-                for b in week_day_dict[a]
-                for i in player_ids
-            ]
+        objective_expr = so.expr_sum(
+            (points[(i, a, b)] * team_var[i, a, b])
+            + (points[(i, a, b)] * cap_var[i, a, b])
+            - (transfer_var[i, a, b] * penalty_dict[a][b] * decay_dict[a][b])
+            for a in week_day_dict.keys()
+            for b in week_day_dict[a]
+            for i in player_ids
         )
 
+    model.set_objective(-objective_expr, sense="N", name="total_points")
+
+    # post allstar team reset
+    if not day_solve:
+        for as_day_str in use_as:
+            as_week, as_day = -1, -1
+            try:
+                as_week_str, as_day_str_int = as_day_str.strip().split("_")
+                as_week = int(as_week_str)
+                as_day = int(as_day_str_int)
+            except ValueError:
+                print(f"Warning: Invalid AllStar day format '{as_day_str}'. Skipping.")
+                continue
+
+            if as_week != -1 and as_day != -1:
+                a_before, b_before = -1, -1
+                a_after, b_after = -1, -1
+
+                try:
+                    if as_day > 1 and as_week in week_day_dict:
+                        as_day_index = week_day_dict[as_week].index(as_day)
+                        if as_day_index > 0:
+                            a_before, b_before = (
+                                as_week,
+                                week_day_dict[as_week][as_day_index - 1],
+                            )
+                    elif as_week > current_week:
+                        a_before = as_week - 1
+                        if a_before in week_day_dict:
+                            b_before = max(week_day_dict[a_before])
+                    elif as_week == current_week and as_day > current_day:
+                        as_day_index = week_day_dict[as_week].index(as_day)
+                        if as_day_index > 0:
+                            a_before, b_before = (
+                                as_week,
+                                week_day_dict[as_week][as_day_index - 1],
+                            )
+
+                    if as_week in week_day_dict:
+                        as_day_index = week_day_dict[as_week].index(as_day)
+                        if as_day_index < len(week_day_dict[as_week]) - 1:
+                            a_after, b_after = (
+                                as_week,
+                                week_day_dict[as_week][as_day_index + 1],
+                            )
+                        elif as_week < final_gw:
+                            a_after = as_week + 1
+                            if a_after in week_day_dict:
+                                b_after = min(week_day_dict[a_after])
+
+                    if a_after != -1:
+                        if a_before != -1:
+                            print(
+                                f"Applying AllStar 'team return' constraint: Day {a_after}_{b_after} team = Day {a_before}_{b_before} team."
+                            )
+                            model.add_constraints(
+                                (
+                                    squad_var[i, a_after, b_after]
+                                    == squad_var[i, a_before, b_before]
+                                    for i in player_ids
+                                ),
+                                name=f"as_return_{as_week}_{as_day}",
+                            )
+                        elif as_week == current_week and as_day == current_day:
+                            model.add_constraints(
+                                (
+                                    squad_var[i, a_after, b_after]
+                                    == in_team_flag_for_solver[i]
+                                    for i in player_ids
+                                ),
+                                name=f"as_return_initial_{as_week}_{as_day}",
+                            )
+
+                except (ValueError, KeyError, IndexError):
+                    pass
+
+    # constraints
     for a in week_day_dict.keys():
         if cap_used and a == current_week:
-            prob += (
-                pulp.lpSum(
-                    [cap_var[a][b][i] for b in week_day_dict[a] for i in player_ids]
+            model.add_constraint(
+                so.expr_sum(
+                    cap_var[i, a, b] for b in week_day_dict[a] for i in player_ids
                 )
-                == 0
+                == 0,
+                name=f"no_cap_week_{a}",
             )
         else:
-            prob += (
-                pulp.lpSum(
-                    [cap_var[a][b][i] for b in week_day_dict[a] for i in player_ids]
+            model.add_constraint(
+                so.expr_sum(
+                    cap_var[i, a, b] for b in week_day_dict[a] for i in player_ids
                 )
-                == 1
+                == 1,
+                name=f"cap_week_{a}",
             )
 
         for b in week_day_dict[a]:
-            prob += pulp.lpSum([squad_var[a][b][i] for i in player_ids]) == 10
-            prob += pulp.lpSum([team_var[a][b][i] for i in player_ids]) == 5
+            current_day_str = f"{a}_{b}"
+            is_this_day_allstar = current_day_str in use_as
 
-            prob += (
-                pulp.lpSum(
-                    [positions["pos_1"][i] * team_var[a][b][i] for i in player_ids]
+            if is_this_day_allstar:
+                model.add_constraint(
+                    so.expr_sum(cap_var[i, a, b] for i in player_ids) == 0,
+                    name=f"no_cap_as_{a}_{b}",
                 )
-                >= 2
+
+            model.add_constraint(
+                so.expr_sum(squad_var[i, a, b] for i in player_ids) == 10,
+                name=f"squad_size_{a}_{b}",
             )
-            prob += (
-                pulp.lpSum(
-                    [positions["pos_1"][i] * team_var[a][b][i] for i in player_ids]
-                )
-                <= 3
-            )
-            prob += (
-                pulp.lpSum(
-                    [positions["pos_1"][i] * squad_var[a][b][i] for i in player_ids]
-                )
-                == 5
+            model.add_constraint(
+                so.expr_sum(team_var[i, a, b] for i in player_ids) == 5,
+                name=f"team_size_{a}_{b}",
             )
 
-            if not day_solve:
-                prob += (
-                    pulp.lpSum(
-                        [data["now_cost"][i] * squad_var[a][b][i] for i in player_ids]
+            model.add_constraint(
+                so.expr_sum(
+                    positions["pos_1"][i] * team_var[i, a, b] for i in player_ids
+                )
+                >= 2,
+                name=f"team_pos1_min_{a}_{b}",
+            )
+            model.add_constraint(
+                so.expr_sum(
+                    positions["pos_1"][i] * team_var[i, a, b] for i in player_ids
+                )
+                <= 3,
+                name=f"team_pos1_max_{a}_{b}",
+            )
+            model.add_constraint(
+                so.expr_sum(
+                    positions["pos_1"][i] * squad_var[i, a, b] for i in player_ids
+                )
+                == 5,
+                name=f"squad_pos1_{a}_{b}",
+            )
+
+            if not day_solve and not is_this_day_allstar:
+                model.add_constraint(
+                    so.expr_sum(
+                        data["now_cost"][i] * squad_var[i, a, b] for i in player_ids
                     )
-                    <= money
+                    <= money,
+                    name=f"budget_{a}_{b}",
                 )
 
             for team in teams:
-                prob += (
-                    pulp.lpSum(
-                        [teams[team][i] * squad_var[a][b][i] for i in player_ids]
-                    )
-                    <= 2
+                model.add_constraint(
+                    so.expr_sum(teams[team][i] * squad_var[i, a, b] for i in player_ids)
+                    <= 2,
+                    name=f"team_limit_{team}_{a}_{b}",
                 )
 
-            for i in player_ids:
-                prob += team_var[a][b][i] <= squad_var[a][b][i]
-                prob += cap_var[a][b][i] <= team_var[a][b][i]
+            model.add_constraints(
+                (team_var[i, a, b] <= squad_var[i, a, b] for i in player_ids),
+                name=f"team_squad_rel_{a}_{b}",
+            )
+            model.add_constraints(
+                (cap_var[i, a, b] <= team_var[i, a, b] for i in player_ids),
+                name=f"cap_team_rel_{a}_{b}",
+            )
 
+    # transfers
     if not day_solve:
-        # Track transfers across days and weeks
         for a in week_day_dict.keys():
             for b in week_day_dict[a]:
-                for i in player_ids:
-                    # Transfer event: 1 if the player was added or removed on this day, 0 otherwise
+                current_day_str = f"{a}_{b}"
+                is_this_day_wildcard = current_day_str in use_wc
+                is_this_day_allstar = current_day_str in use_as
 
-                    # Transfer check within the same week (compare with the previous day in the same week)
-                    if a == current_week and b == current_day and wildcard:
-                        prob += transfer_var[a][b][i] == 0
-                    elif a == current_week and b == current_day and not wildcard:
-                        prob += (
-                            transfer_var[a][b][i]
-                            >= squad_var[a][b][i] - in_team_flag[i]
-                        )
-                    elif b > 1:
+                a_prev, b_prev = -1, -1
+                is_prev_day_allstar = False
+                is_first_day = a == current_week and b == current_day
+
+                if not is_first_day:
+                    if b > 1:
                         current_index = week_day_dict[a].index(b)
-                        previous_day = week_day_dict[a][current_index - 1]
-                        prob += (
-                            transfer_var[a][b][i]
-                            >= squad_var[a][b][i] - squad_var[a][previous_day][i]
+                        a_prev, b_prev = a, week_day_dict[a][current_index - 1]
+                    elif a > current_week:
+                        a_prev = a - 1
+                        if a_prev in week_day_dict:
+                            b_prev = max(week_day_dict[a_prev])
+                        else:
+                            a_prev = -1
+
+                    if a_prev != -1:
+                        prev_day_str = f"{a_prev}_{b_prev}"
+                        if prev_day_str in use_as:
+                            is_prev_day_allstar = True
+
+                for i in player_ids:
+                    if is_this_day_wildcard or is_this_day_allstar:
+                        model.add_constraint(
+                            transfer_var[i, a, b] == 0,
+                            name=f"no_transfer_chip_{i}_{a}_{b}",
+                        )
+                    elif is_prev_day_allstar:
+                        model.add_constraint(
+                            transfer_var[i, a, b] == 0,
+                            name=f"no_transfer_after_as_{i}_{a}_{b}",
                         )
                     else:
-                        # For the first day of the new week, compare with the last day of the previous week
-                        if a > current_week:
-                            last_day_of_prev_week = max(week_day_dict[a - 1])
-                            prob += (
-                                transfer_var[a][b][i]
-                                >= squad_var[a][b][i]
-                                - squad_var[a - 1][last_day_of_prev_week][i]
+                        if is_first_day:
+                            model.add_constraint(
+                                transfer_var[i, a, b]
+                                >= squad_var[i, a, b] - in_team_flag_for_solver[i],
+                                name=f"transfer_first_{i}_{a}_{b}",
+                            )
+                        elif a_prev != -1:
+                            model.add_constraint(
+                                transfer_var[i, a, b]
+                                >= squad_var[i, a, b] - squad_var[i, a_prev, b_prev],
+                                name=f"transfer_{i}_{a}_{b}",
                             )
                         else:
-                            # For the very first week, no transfers should have occurred before
-                            prob += transfer_var[a][b][i] == 0
+                            model.add_constraint(
+                                transfer_var[i, a, b]
+                                >= squad_var[i, a, b] - in_team_flag_for_solver[i],
+                                name=f"transfer_default_{i}_{a}_{b}",
+                            )
 
             if a > current_week:
-                prob += (
-                    pulp.lpSum(
-                        [
-                            transfer_var[a][b][i]
-                            for b in week_day_dict[a]
-                            for i in player_ids
-                        ]
+                model.add_constraint(
+                    so.expr_sum(
+                        transfer_var[i, a, b]
+                        for b in week_day_dict[a]
+                        for i in player_ids
                     )
-                    <= 2
+                    <= 2,
+                    name=f"transfer_limit_{a}",
                 )
             else:
-                prob += (
-                    pulp.lpSum(
-                        [
-                            transfer_var[a][b][i]
-                            for b in week_day_dict[a]
-                            for i in player_ids
-                        ]
+                model.add_constraint(
+                    so.expr_sum(
+                        transfer_var[i, a, b]
+                        for b in week_day_dict[a]
+                        for i in player_ids
                     )
-                    <= transfers_left
+                    <= transfers_left,
+                    name=f"transfer_limit_current_{a}",
                 )
 
-    for i in locked:
-        prob += squad_var[current_week][current_day][i] == 1
-
-    if not wildcard and not day_solve:
-        prob += (
-            pulp.lpSum([squad_var[current_week][current_day][i] for i in in_team]) >= 8
-        )
-
-    prob += (
-        pulp.lpSum([squad_var[current_week][current_day][i] for i in gd_banned]) == 0
+    model.add_constraints(
+        (
+            squad_var[i, current_week, current_day] == 1
+            for i in locked
+            if i in player_ids
+        ),
+        name="locked_players",
     )
 
-    prob.solve(pulp.HiGHS(timeLimit=max_time, gapRel=gap))
-    print("Score: ", pulp.value(prob.objective))
-    print("Status: ", pulp.LpStatus[prob.status])
+    first_day_str = f"{current_week}_{current_day}"
+    is_wildcard_active_today = first_day_str in use_wc
 
-    output = data[["name", "now_cost", "element_type"]].reset_index()
-
-    combined_df = output.copy()
-    combined_df["current"] = combined_df["id"].map(in_team_flag)
-
-    ev_mapping = {}
-    for a in week_day_dict.keys():
-        for b in week_day_dict[a]:
-            gw_day_key = f"Gameweek {a} - Day {b}"
-            if gw_day_key in data.columns:
-                ev_mapping[(a, b)] = gw_day_key
-
-    for a in week_day_dict.keys():
-        for b in week_day_dict[a]:
-            day_str = f"{a}_{b}"
-            # Add squad columns (1 if in squad, 0 otherwise)
-            combined_df[f"squad_{day_str}"] = combined_df["id"].apply(
-                lambda x: 1 if round(squad_var[a][b][x].varValue) == 1 else 0
+    if not is_wildcard_active_today and not day_solve:
+        model.add_constraint(
+            so.expr_sum(
+                squad_var[i, current_week, current_day]
+                for i in in_team
+                if i in player_ids
             )
-            # Add team columns (1 if in team, 0 if benched)
-            combined_df[f"team_{day_str}"] = combined_df["id"].apply(
-                lambda x: 1 if round(team_var[a][b][x].varValue) == 1 else 0
-            )
-            # Add captain columns (1 if captain, 0 otherwise)
-            combined_df[f"cap_{day_str}"] = combined_df["id"].apply(
-                lambda x: 1 if round(cap_var[a][b][x].varValue) == 1 else 0
-            )
+            >= 8,
+            name="min_players_from_current",
+        )
 
-            ev_key = (a, b)
-            if ev_key in ev_mapping:
-                ev_col = ev_mapping[ev_key]
-                combined_df[f"xPts_{day_str}"] = data[ev_col].reset_index()[
-                    f"Gameweek {a} - Day {b}"
-                ]
-    full_player_df = combined_df.copy()
-    squad_columns = [col for col in combined_df.columns if col.startswith("squad_")]
-    combined_df = combined_df[combined_df[squad_columns].eq(1).any(axis=1)]
+    model.add_constraint(
+        so.expr_sum(
+            squad_var[i, current_week, current_day]
+            for i in gd_banned
+            if i in player_ids
+        )
+        == 0,
+        name="banned_today",
+    )
 
-    time_now = datetime.datetime.now()
-    stamp = time_now.strftime("%Y-%m-%d_%H-%M-%S")
+    if not day_solve and booked_transfers:
+        print("Adding booked transfer constraints")
+        for bt in booked_transfers:
+            bt_week = bt.get("gw", None)
+            bt_day = bt.get("day", None)
 
-    writer = pd.ExcelWriter(f"../output/NBA_Squad_{stamp}.xlsx", engine="xlsxwriter")
-    combined_df.to_excel(writer, sheet_name="Team_Plan", index=False)
-    writer.close()
-    print(f"Squad and Transfer Plan output to NBA_Squad_{stamp}.xlsx")
+            if bt_week is None or bt_day is None:
+                continue
 
-    sell_summary = []
-    buy_summary = []
-    team_summary = dict()
-    bench_summary = dict()
+            if bt_week not in week_day_dict or bt_day not in week_day_dict[bt_week]:
+                print(
+                    f"Warning: Booked transfer for GW{bt_week} Day{bt_day} is outside solve range"
+                )
+                continue
 
-    for day in week_day_list:
-        a, b = day[0], day[1]
-        day_str = f"{a}_{b}"
-        gw_day_str = f"Gameweek {a} - Day {b}"
+            player_in = bt.get("transfer_in", None)
+            player_out = bt.get("transfer_out", None)
 
-        day_team_df = combined_df[combined_df[f"team_{day_str}"] == 1].copy()
-        day_bench_df = combined_df[
-            (combined_df[f"squad_{day_str}"] == 1)
-            & (combined_df[f"team_{day_str}"] == 0)
-        ].copy()
+            if player_in is not None and player_in in player_ids:
+                model.add_constraint(
+                    squad_var[player_in, bt_week, bt_day] == 1,
+                    name=f"booked_in_{bt_week}_{bt_day}_{player_in}",
+                )
 
-        if gw_day_str in data.columns:
-            points_lookup = data[gw_day_str]
+            if player_out is not None and player_out in player_ids:
+                model.add_constraint(
+                    squad_var[player_out, bt_week, bt_day] == 0,
+                    name=f"booked_out_{bt_week}_{bt_day}_{player_out}",
+                )
 
-            team_points = day_team_df["id"].map(points_lookup)
+    # iters
+    solutions = []
 
-            day_team_df["display_name"] = np.where(
-                team_points.isna(),
-                day_team_df["name"],
-                day_team_df["name"] + "(" + team_points.round(2).astype(str) + ")",
-            )
+    for iteration_num in range(num_iterations):
+        print(f"\n=== Solving Iteration {iteration_num} ===")
 
-            bench_points = day_bench_df["id"].map(points_lookup)
+        tmp_folder = Path() / "tmp"
+        tmp_folder.mkdir(exist_ok=True, parents=True)
 
-            day_bench_df["display_name"] = np.where(
-                bench_points.isna(),
-                day_bench_df["name"],
-                day_bench_df["name"] + "(" + bench_points.round(2).astype(str) + ")",
-            )
-        else:
-            day_team_df["display_name"] = day_team_df["name"]
-            day_bench_df["display_name"] = day_bench_df["name"]
+        mps_file_name = f"tmp/{problem_name}_{iteration_num}.mps"
+        model.export_mps(mps_file_name)
+        print(f"Exported problem: {problem_name}_{iteration_num}")
 
-        captain_ids = combined_df[combined_df[f"cap_{day_str}"] == 1]["id"].tolist()
-        if captain_ids:
-            day_team_df["display_name"] = day_team_df.apply(
-                lambda row: (
-                    f"{row['display_name']} (C)"
-                    if row["id"] in captain_ids
-                    else row["display_name"]
-                ),
-                axis=1,
-            )
+        solver_instance = highspy.Highs()
+        solver_instance.readModel(str(mps_file_name))
+        solver_instance.setOptionValue("parallel", "on")
+        solver_instance.setOptionValue("time_limit", max_time)
+        solver_instance.setOptionValue("mip_rel_gap", gap)
+        solver_instance.setOptionValue("log_to_console", True)
 
-        team_summary[day_str] = day_team_df["display_name"].tolist()
-        bench_summary[day_str] = day_bench_df["display_name"].tolist()
+        solver_instance.run()
+        solution = solver_instance.getSolution()
 
-    # current gws
-    first_gw_day = f"{current_week}_{current_day}"
-    first_squad_col = f"squad_{first_gw_day}"
-
-    print()
-    print(f"{first_gw_day}: ")
-    for _, row in full_player_df.iterrows():
-        if row["current"] != row[first_squad_col]:
-            if row["current"] == 1:
-                print(f"Sell: {row['name']}, Price: {row['now_cost'] / 10}")
-                sell_summary.append(row["name"])
+        model_status = solver_instance.getModelStatus()
+        if model_status != highspy.HighsModelStatus.kOptimal:
+            if iteration_num > 0:
+                break
             else:
-                print(f"Buy: {row['name']}, Price: {row['now_cost'] / 10}")
-                buy_summary.append(row["name"])
+                return solutions
 
-    print("Line-up: ")
-    front_court = []
-    back_court = []
-    for _, row in combined_df.iterrows():
-        if row[f"team_{first_gw_day}"] == 1:
-            ev_col = f"Gameweek {current_week} - Day {current_day}"
-            player_name = f"{row['name']}({data.loc[row['id'], ev_col]:.2f})"
-            if row[f"cap_{first_gw_day}"] == 1:
-                player_name += " (C)"
-            if row["element_type"] == 2:
-                front_court.append(player_name)
-            else:
-                back_court.append(player_name)
+        values = list(solution.col_value)
 
-    print("\t" + ", ".join(front_court))
-    print("\t" + ", ".join(back_court) + "\n")
+        for idx, v in enumerate(model.get_variables()):
+            v.set_value(values[idx])
 
-    print("Benched: \n" + "\t" + ", ".join(bench_summary[first_gw_day]) + "\n")
+        print("Score: ", -model.get_objective_value())
+        print("Status: ", model_status)
 
-    day_xPts = 0
-    for _, row in combined_df.iterrows():
-        if row[f"team_{first_gw_day}"] == 1:
-            ev_col = f"Gameweek {current_week} - Day {current_day}"
-            if row[f"cap_{first_gw_day}"] == 1:
-                day_xPts += 2 * data.loc[row["id"], ev_col]
-            else:
-                day_xPts += data.loc[row["id"], ev_col]
+        # results as df for printing (prisitint sounds so funky ik lmaoo)
+        combined_df = pristine_output_df.copy()
 
-    print(f"Cumulative xPts: {day_xPts:.2f}")
-    print()
+        ev_mapping = {}
+        for a in week_day_dict.keys():
+            for b in week_day_dict[a]:
+                gw_day_key = f"Gameweek {a} - Day {b}"
+                if gw_day_key in data.columns:
+                    ev_mapping[(a, b)] = gw_day_key
 
-    # future gws
-    squad_day_cols = [col for col in combined_df.columns if col.startswith("squad_")]
-    squad_day_cols.sort()
+        for a in week_day_dict.keys():
+            for b in week_day_dict[a]:
+                day_str = f"{a}_{b}"
 
-    for i in range(1, len(squad_day_cols)):
-        current_day = squad_day_cols[i].replace("squad_", "")
+                combined_df[f"squad_{day_str}"] = combined_df["id"].apply(
+                    lambda x: 1
+                    if x in player_ids
+                    and squad_var[x, a, b].get_value() > BINARY_THRESHOLD
+                    else 0
+                )
+                combined_df[f"team_{day_str}"] = combined_df["id"].apply(
+                    lambda x: 1
+                    if x in player_ids
+                    and team_var[x, a, b].get_value() > BINARY_THRESHOLD
+                    else 0
+                )
+                combined_df[f"cap_{day_str}"] = combined_df["id"].apply(
+                    lambda x: 1
+                    if x in player_ids
+                    and cap_var[x, a, b].get_value() > BINARY_THRESHOLD
+                    else 0
+                )
 
-        print(f"{current_day} : ")
-        for _, row in combined_df.iterrows():
-            if row[squad_day_cols[i - 1]] != row[squad_day_cols[i]]:
-                if row[squad_day_cols[i - 1]] == 1:
-                    print(f"Sell: {row['name']}, Price: {row['now_cost'] / 10}")
+                ev_key = (a, b)
+                if ev_key in ev_mapping:
+                    ev_col = ev_mapping[ev_key]
+                    points_map = pristine_data_for_printing.set_index("id")[ev_col]
+                    combined_df[f"xPts_{day_str}"] = combined_df["id"].map(points_map)
+
+        full_player_df = combined_df.copy()
+        squad_columns = [col for col in combined_df.columns if col.startswith("squad_")]
+        combined_df = combined_df[combined_df[squad_columns].eq(1).any(axis=1)]
+
+        sell_summary_names = []
+        buy_summary_names = []
+        sell_summary_ids = []
+        buy_summary_ids = []
+
+        first_gw_day = f"{current_week}_{current_day}"
+        first_squad_col = f"squad_{first_gw_day}"
+
+        for _, row in full_player_df.iterrows():
+            if row["current"] != row[first_squad_col]:
+                if row["current"] == 1:
+                    sell_summary_names.append(row["name"])
+                    sell_summary_ids.append(row["id"])
                 else:
-                    print(f"Buy: {row['name']}, Price: {row['now_cost'] / 10}")
-        print("Line-up: ")
-        front_court = []
-        back_court = []
+                    buy_summary_names.append(row["name"])
+                    buy_summary_ids.append(row["id"])
+
+        first_day_lineup_ids = []
+        team_col = f"team_{first_gw_day}"
         for _, row in combined_df.iterrows():
-            if row[f"team_{current_day}"] == 1:
-                ev_col = f"Gameweek {current_day.split('_')[0]} - Day {current_day.split('_')[1]}"
-                player_name = f"{row['name']}({data.loc[row['id'], ev_col]:.2f})"
-                if row[f"cap_{current_day}"] == 1:
-                    player_name += " (C)"
-                if row["element_type"] == 2:
-                    front_court.append(player_name)
-                else:
-                    back_court.append(player_name)
+            if row[team_col] == 1:
+                first_day_lineup_ids.append(row["id"])
 
-        print("\t" + ", ".join(front_court))
+        all_chips = []
+        for wc_day in use_wc:
+            if wc_day:
+                try:
+                    wc_week, wc_day_str = wc_day.split("_")
+                    if (
+                        int(wc_week) in week_day_dict
+                        and int(wc_day_str) in week_day_dict[int(wc_week)]
+                    ):
+                        all_chips.append(f"WC{wc_day}")
+                except:  # noqa: E722
+                    pass
 
-        print("\t" + ", ".join(back_court) + "\n")
+        for as_day in use_as:
+            if as_day:
+                try:
+                    as_week, as_day_str = as_day.split("_")
+                    if (
+                        int(as_week) in week_day_dict
+                        and int(as_day_str) in week_day_dict[int(as_week)]
+                    ):
+                        all_chips.append(f"AS{as_day}")
+                except:  # noqa: E722
+                    pass
 
-        print("Benched: \n " + "\t" + ", ".join(bench_summary[current_day]) + "\n")
+        chip_horizon_str = ", ".join(all_chips) if all_chips else "-"
+        first_day_sells_str = (
+            ", ".join(sell_summary_names) if sell_summary_names else "-"
+        )
+        first_day_buys_str = ", ".join(buy_summary_names) if buy_summary_names else "-"
 
-        day_xPts = 0
-        for _, row in combined_df.iterrows():
-            if row[f"team_{current_day}"] == 1:
-                ev_col = f"Gameweek {current_day.split('_')[0]} - Day {current_day.split('_')[1]}"
-                if row[f"cap_{current_day}"] == 1:
-                    day_xPts += 2 * data.loc[row["id"], ev_col]
-                else:
-                    day_xPts += data.loc[row["id"], ev_col]
+        result = {
+            "iter": iteration_num,
+            "score": -model.get_objective_value(),
+            "status": "Optimal",
+            "sell": first_day_sells_str,
+            "buy": first_day_buys_str,
+            "chip": chip_horizon_str,
+            "sell_ids": sell_summary_ids,
+            "buy_ids": buy_summary_ids,
+            "full_player_df": full_player_df,
+            "week_day_list": week_day_list,
+            "current_week": current_week,
+            "current_day": current_day,
+            "first_day_lineup_ids": first_day_lineup_ids,
+            "use_wc": use_wc,
+            "use_as": use_as,
+            "picks_df": combined_df,
+        }
 
-        print(f"Cumulative xPts: {day_xPts:.2f}")
-        print()
+        solutions.append(result)
 
-    print()
+        try:
+            time.sleep(0.1)
+            os.unlink(mps_file_name)
+        except:  # noqa: E722
+            pass
+
+        if num_iterations == 1:
+            return solutions
+
+        if iteration_criteria == "this_day_transfer_in":
+            transferred_in_players = [
+                p
+                for p in player_ids
+                if transfer_var[p, current_week, current_day].get_value()
+                > BINARY_THRESHOLD
+            ]
+            not_transferred_in_players = [
+                p
+                for p in player_ids
+                if transfer_var[p, current_week, current_day].get_value()
+                < BINARY_THRESHOLD
+            ]
+
+            actions = so.expr_sum(
+                1 - transfer_var[p, current_week, current_day]
+                for p in transferred_in_players
+            ) + so.expr_sum(
+                transfer_var[p, current_week, current_day]
+                for p in not_transferred_in_players
+            )
+
+            model.add_constraint(
+                actions >= iteration_difference,
+                name=f"iter_{iteration_num}_diff_transfer_in",
+            )
+
+        elif iteration_criteria == "this_day_transfer_out":
+            eligible_out_players = [
+                p for p in player_ids if in_team_flag_for_solver[p] == 1
+            ]
+
+            transferred_out_set = {
+                p
+                for p in eligible_out_players
+                if squad_var[p, current_week, current_day].get_value()
+                < BINARY_THRESHOLD
+            }
+            not_transferred_out_set = {
+                p for p in eligible_out_players if p not in transferred_out_set
+            }
+
+            actions_was_out = so.expr_sum(
+                squad_var[p, current_week, current_day] for p in transferred_out_set
+            )
+
+            actions_was_in = so.expr_sum(
+                1 - squad_var[p, current_week, current_day]
+                for p in not_transferred_out_set
+            )
+
+            model.add_constraint(
+                actions_was_out + actions_was_in >= iteration_difference,
+                name=f"iter_{iteration_num}_diff_transfer_out",
+            )
+
+        elif iteration_criteria == "this_day_transfer_in_out":
+            transferred_in_players = [
+                p
+                for p in player_ids
+                if transfer_var[p, current_week, current_day].get_value()
+                > BINARY_THRESHOLD
+            ]
+            not_transferred_in_players = [
+                p
+                for p in player_ids
+                if transfer_var[p, current_week, current_day].get_value()
+                < BINARY_THRESHOLD
+            ]
+            actions_in = so.expr_sum(
+                1 - transfer_var[p, current_week, current_day]
+                for p in transferred_in_players
+            ) + so.expr_sum(
+                transfer_var[p, current_week, current_day]
+                for p in not_transferred_in_players
+            )
+
+            eligible_out_players = [
+                p for p in player_ids if in_team_flag_for_solver[p] == 1
+            ]
+            transferred_out_set = {
+                p
+                for p in eligible_out_players
+                if squad_var[p, current_week, current_day].get_value()
+                < BINARY_THRESHOLD
+            }
+            not_transferred_out_set = {
+                p for p in eligible_out_players if p not in transferred_out_set
+            }
+            actions_out = so.expr_sum(
+                squad_var[p, current_week, current_day] for p in transferred_out_set
+            ) + so.expr_sum(
+                1 - squad_var[p, current_week, current_day]
+                for p in not_transferred_out_set
+            )
+
+            model.add_constraint(
+                actions_in + actions_out >= iteration_difference,
+                name=f"iter_{iteration_num}_diff_transfer_in_out",
+            )
+
+        elif iteration_criteria == "this_day_lineup":
+            # the only which uses iteration_difference i think
+            if first_day_lineup_ids:
+                model.add_constraint(
+                    so.expr_sum(
+                        team_var[p, current_week, current_day]
+                        for p in first_day_lineup_ids
+                    )
+                    <= len(first_day_lineup_ids) - iteration_difference,
+                    name=f"iter_{iteration_num}_diff_lineup",
+                )
+
+        # end of iteration
+
+    return solutions
