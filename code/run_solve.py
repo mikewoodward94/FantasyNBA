@@ -189,6 +189,7 @@ def print_squad_lineups(
         temp_sells = []
         temp_buys = []
         itb_before_this_day = current_itb
+        itb_before_this_day = itb_before_this_day / 10
         cost_of_sells = 0
         cost_of_buys = 0
 
@@ -202,6 +203,7 @@ def print_squad_lineups(
                     cost_of_buys += row["now_cost"] / 10
 
         itb_after_this_day = itb_before_this_day + cost_of_sells - cost_of_buys
+        itb_after_this_day = itb_after_this_day / 10
 
         nt_this_day = len(temp_buys)
         ft_this_day_str = str(week_ft_remaining)
@@ -345,6 +347,42 @@ def main(
             (player_info["status"].isin(["a", "d"])) | (player_info["id"].isin(in_team))
         ]
         hashtag_data = read_hashtag()
+        name_fixes = {
+            "Walter Clayton": "Walter Clayton Jr.",
+            "Gary Trent": "Gary Trent Jr.",
+            "A.J. Johnson": "AJ Johnson",
+            "O.G. Anunoby": "OG Anunoby",
+            "Yanic Konan Niederhauser": "Yanic Konan Niederhäuser",
+            "Robert Williams": "Robert Williams III",
+            "PJ Washington": "P.J. Washington",
+            "R.J. Barrett": "RJ Barrett",
+            "Kevin McCullar Jr": "Kevin McCullar Jr.",
+            "Trey Murphy": "Trey Murphy III",
+            "Craig Porter Jr.": "Craig Porter",
+            "Derrick Jones": "Derrick Jones Jr.",
+            "KJ Simpson": "K.J. Simpson",
+            "Patrick Baldwin": "Patrick Baldwin Jr.",
+            "J.D. Davison": "JD Davison",
+            "Chris Manon": "Chris Mañon",
+            "Egor Demin": "Egor Dëmin",
+            "Kelly Oubre": "Kelly Oubre Jr.",
+            "AJ Green": "A.J. Green",
+            "Wendell Moore Jr": "Wendell Moore Jr.",
+            "Hugo Gonzalez": "Hugo González",
+            "David Duke": "David Duke Jr.",
+            "G.G. Jackson": "GG Jackson",
+            "C.J. McCollum": "CJ McCollum",
+            "Jeenathan Williams Jr.": "Jeenathan Williams",
+            "Cam Johnson": "Cameron Johnson",
+            "Ron Holland": "Ronald Holland II",
+            "Nicolas Claxton": "Nic Claxton",
+            "Herb Jones": "Herbert Jones",
+            "Bub Carrington": "Carlton Carrington",
+            "David Jones-Garcia": "David Jones",
+            "Mouhamadou Gueye": "Mouhamed Gueye",
+            "EJ Harkless": "Elijah Harkless",
+        }
+        hashtag_data["PLAYER"] = hashtag_data["PLAYER"].replace(name_fixes)
         player_data = player_info.merge(
             hashtag_data, left_on="name", right_on="PLAYER", how="inner"
         )
