@@ -145,7 +145,6 @@ def print_squad_lineups(
     result, initial_in_bank, initial_transfers_left, transfer_penalties
 ):
     print(f"\n\n======= Squad Lineups for Iteration {result['iter']} =======")
-    print(f"Total xPts: {result['score']:.2f}\n")
 
     full_player_df = result["full_player_df"]
     combined_df = result["picks_df"]
@@ -162,6 +161,7 @@ def print_squad_lineups(
     squad_day_cols.insert(0, "current")
 
     true_prev_col = "current"
+    total_calculated_xpts = 0.0
 
     for i in range(1, len(squad_day_cols)):
         curr_col = squad_day_cols[i]
@@ -294,9 +294,13 @@ def print_squad_lineups(
         print("Benched: \n " + "\t" + ", ".join(bench_names))
 
         print(f"Total xPts: {day_xPts - pt_this_day:.2f}\n")
+        total_calculated_xpts += day_xPts - pt_this_day
 
         if not is_as_day:
             true_prev_col = curr_col
+
+    print("\n")
+    print(f"Total xPts across the horizon: {total_calculated_xpts:.2f}\n")
 
 
 def main(
@@ -430,6 +434,8 @@ def main(
             )
         player_data.to_csv("../data/NBA_EV.csv", index=False)
         print("EV generated and output to NBA_EV.csv")
+    elif ev_sheet == "mou":
+        player_data = pd.read_csv("../data/mou.csv")
     else:
         print("Loading existing EV sheet")
         player_data = pd.read_csv("../data/NBA_EV.csv")

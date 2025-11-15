@@ -7,3 +7,5 @@ sasoptpy
 pathlib
 highspy
 tabulate
+urllib3
+bs4
