@@ -197,9 +197,22 @@ def nba_solver(
         )
     else:
         objective_expr = so.expr_sum(
-            (points[(i, a, b)] * team_var[i, a, b])
-            + (points[(i, a, b)] * cap_var[i, a, b])
-            - (transfer_var[i, a, b] * penalty_dict[a][b] * decay_dict[a][b])
+            (
+                (
+                    (points[(i, a, b)] * team_var[i, a, b])
+                    + (
+                        points[(i, a, b)]
+                        * (squad_var[i, a, b] - team_var[i, a, b])
+                        * 0.99
+                    )
+                )
+                if f"{a}_{b}" in use_as
+                else (
+                    (points[(i, a, b)] * team_var[i, a, b])
+                    + (points[(i, a, b)] * cap_var[i, a, b])
+                    - (transfer_var[i, a, b] * penalty_dict[a][b] * decay_dict[a][b])
+                )
+            )
             for a in week_day_dict.keys()
             for b in week_day_dict[a]
             for i in player_ids
@@ -457,8 +470,9 @@ def nba_solver(
 
     first_day_str = f"{current_week}_{current_day}"
     is_wildcard_active_today = first_day_str in use_wc
+    is_allstar_active_today = first_day_str in use_as
 
-    if not is_wildcard_active_today and not day_solve:
+    if not is_wildcard_active_today and not is_allstar_active_today and not day_solve:
         model.add_constraint(
             so.expr_sum(
                 squad_var[i, current_week, current_day]
