@@ -459,14 +459,16 @@ def nba_solver(
                     name=f"transfer_limit_current_{a}",
                 )
 
-    model.add_constraints(
-        (
-            squad_var[i, current_week, current_day] == 1
-            for i in locked
-            if i in player_ids
-        ),
-        name="locked_players",
-    )
+    for i in locked:
+        if i in player_ids:
+            model.add_constraints(
+                (
+                    squad_var[i, a, b] == 1
+                    for a in week_day_dict.keys()
+                    for b in week_day_dict[a]
+                ),
+                name=f"locked_player_{i}",
+            )
 
     first_day_str = f"{current_week}_{current_day}"
     is_wildcard_active_today = first_day_str in use_wc
