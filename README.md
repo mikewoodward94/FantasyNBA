@@ -17,7 +17,13 @@ You must be logged in, and you can find your ID in the url if you navigate to yo
 P.S. You can run a solve by just plugging in your id in the settings.json
 
 ### Installing Requirements
-Please run the following to ensure that you have all prerequisite packages installed:
+Run the code to clone (i.e. install it locally) the repository:
+
+```
+git clone https://github.com/mikewoodward94/FantasyNBA.git
+```
+
+Please run the following to ensure that you have all prerequisite packages installed to run solves hassle-free:
 ```
 pip install -r requirements.txt
 ```
@@ -96,6 +102,10 @@ I normally solve for 3 gameweeks at a time, which is usually 21 gamedays.
    - `this_day_lineup` will force to replace at least N players in your lineup (only criteria which uses `iteration_difference`).
 
 `iteration_difference`: Number of players to be different across the iterations.
+
+`weekly_hit_limit`: Restricts the amount of hits that solver considers in a week (for instance, setting it to `weekly_hit_limit=1` would ensure that the solver **considers** only a singular hit every gameweek). Set to `0` if you want no hits **considered** whatsoever or to `""` if you have no preference as such.
+
+`hit_cost`: Set at `100` by default, can be tailored to your own *perception* of the cost of a points hit.
 
 `max_time`: Max time in seconds to allow for solve.
 
