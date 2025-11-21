@@ -47,6 +47,8 @@ settings = load_settings()
     gap,
     max_time,
     transfer_penalty,
+    hit_cost,
+    weekly_hit_limit,
     team_data,
     team_id,
     ev_sheet,
@@ -77,6 +79,8 @@ settings = load_settings()
     settings["gap"],
     settings["max_time"],
     settings.get("transfer_penalty", {}),
+    settings.get("hit_cost", 100),
+    settings.get("weekly_hit_limit"),
     settings["team_data"],
     settings["team_id"],
     settings["ev_sheet"],
@@ -141,9 +145,7 @@ def print_transfer_chip_summary(result):
             true_prev_col = curr_col
 
 
-def print_squad_lineups(
-    result, initial_in_bank, initial_transfers_left, transfer_penalties
-):
+def print_squad_lineups(result, initial_in_bank, initial_transfers_left, hit_cost):
     print(f"\n\n======= Squad Lineups for Iteration {result['iter']} =======")
 
     full_player_df = result["full_player_df"]
@@ -167,13 +169,7 @@ def print_squad_lineups(
         curr_col = squad_day_cols[i]
         current_day_str = curr_col.replace("squad_", "")
         a, b = current_day_str.split("_")
-        a_int, b_int = int(a), int(b)
-
-        if a_int != current_loop_week:
-            current_loop_week = a_int
-            week_ft_remaining = (
-                initial_transfers_left if a_int == result["current_week"] else 2
-            )
+        a_int = int(a)
 
         is_as_day = current_day_str in allstar
         is_wc_day = current_day_str in wildcard
@@ -184,12 +180,8 @@ def print_squad_lineups(
         elif is_as_day:
             chip_played_str = " (All-Star)"
 
-        print(f"Gameweek {a} - Day {b}{chip_played_str} : ")
-
         temp_sells = []
         temp_buys = []
-        itb_before_this_day = current_itb
-        itb_before_this_day = itb_before_this_day / 10
         cost_of_sells = 0
         cost_of_buys = 0
 
@@ -202,55 +194,59 @@ def print_squad_lineups(
                     temp_buys.append(f"Buy {row['id']} - {row['name']}")
                     cost_of_buys += row["now_cost"] / 10
 
+        nt_this_day = len(temp_buys)
+
+        is_new_week = a_int != current_loop_week
+
+        if is_new_week:
+            current_loop_week = a_int
+            week_ft_remaining = (
+                initial_transfers_left if a_int == result["current_week"] else 2
+            )
+
+            hits_dict = result.get("hits", {})
+            hits_this_week = hits_dict.get(a_int, 0)
+            pt_this_day = hits_this_week * hit_cost
+        else:
+            pt_this_day = 0
+
+        hit_msg = ""
+        if pt_this_day > 0:
+            hit_msg = f" (Hit: -{pt_this_day})"
+
+        print(f"Gameweek {a} - Day {b}{chip_played_str}{hit_msg} : ")
+
+        itb_before_this_day = current_itb
+        itb_before_this_day = itb_before_this_day / 10
+
         itb_after_this_day = itb_before_this_day + cost_of_sells - cost_of_buys
         itb_after_this_day = itb_after_this_day / 10
 
-        nt_this_day = len(temp_buys)
         ft_this_day_str = str(week_ft_remaining)
-        pt_this_day = 0
+
+        if not (is_as_day or is_wc_day):
+            week_ft_remaining = max(0, week_ft_remaining - nt_this_day)
+        else:
+            ft_this_day_str = "∞"
 
         if is_as_day:
-            ft_this_day_str = "∞"
             print(
-                f"\tITB={itb_before_this_day:.1f}->{itb_after_this_day:.1f}, FT={ft_this_day_str}, PT=0, NT={nt_this_day}"
+                f"\tITB= ∞ -> ∞, FT= {ft_this_day_str}, PT={pt_this_day}, NT={nt_this_day}"
             )
-
-        elif is_wc_day:
-            ft_this_day_str = "∞"
-            print(
-                f"\tITB={itb_before_this_day:.1f}->{itb_after_this_day:.1f}, FT={ft_this_day_str}, PT=0, NT={nt_this_day}"
-            )
-
-            if temp_sells:
-                for s in temp_sells:
-                    print(f"\t{s}")
-            if temp_buys:
-                for buy_str in temp_buys:
-                    print(f"\t{buy_str}")
-
-            current_itb = itb_after_this_day
-            true_prev_col = curr_col
-
         else:
-            transfers_to_pay_for = max(0, nt_this_day - week_ft_remaining)
-
-            day_penalty = transfer_penalties.get(str(b_int), 100)
-            pt_this_day = transfers_to_pay_for * day_penalty
-
-            week_ft_remaining = max(0, week_ft_remaining - nt_this_day)
-
             print(
                 f"\tITB={itb_before_this_day:.1f}->{itb_after_this_day:.1f}, FT={ft_this_day_str}, PT={pt_this_day}, NT={nt_this_day}"
             )
 
-            if temp_sells:
-                for s in temp_sells:
-                    print(f"\t{s}")
-            if temp_buys:
-                for buy_str in temp_buys:
-                    print(f"\t{buy_str}")
+        if temp_sells:
+            for s in temp_sells:
+                print(f"\t{s}")
+        if temp_buys:
+            for buy_str in temp_buys:
+                print(f"\t{buy_str}")
 
-            current_itb = itb_after_this_day
+        current_itb = itb_after_this_day
+        if not is_as_day:
             true_prev_col = curr_col
 
         print("Line-up: ")
@@ -293,11 +289,9 @@ def print_squad_lineups(
 
         print("Benched: \n " + "\t" + ", ".join(bench_names))
 
-        print(f"Total xPts: {day_xPts - pt_this_day:.2f}\n")
-        total_calculated_xpts += day_xPts - pt_this_day
-
-        if not is_as_day:
-            true_prev_col = curr_col
+        final_day_score = day_xPts - pt_this_day
+        print(f"Total xPts: {final_day_score:.2f}\n")
+        total_calculated_xpts += final_day_score
 
     print("\n")
     print(f"Total xPts across the horizon: {total_calculated_xpts:.2f}\n")
@@ -321,7 +315,6 @@ def main(
     use_wc,
     use_as,
     booked_transfers,
-    chip_limits,
     num_iterations,
     iteration_criteria,
     iteration_difference,
@@ -329,6 +322,8 @@ def main(
     gap,
     max_time,
     transfer_penalty,
+    hit_cost,
+    weekly_hit_limit,
     ev_sheet,
 ):
     fixture_file_path = DATA_DIR / "fixtures.csv"
@@ -342,7 +337,13 @@ def main(
             fixture_info = clean_fixture_info(fixture_info)
             fixture_info.to_csv("../data/fixtures.csv", index=False)
 
-    in_team, in_team_sell_price, cap_used, transfers_left, in_bank = read_team_json()
+    in_team, in_team_sell_price, cap_used, transfers_left, in_bank, current_api_gw = (
+        read_team_json()
+    )
+
+    effective_transfers_left = transfers_left
+    if first_gw > current_api_gw:
+        effective_transfers_left = 2
 
     if not ev_sheet:
         print("Generating EV")
@@ -451,16 +452,19 @@ def main(
         day_solve,
         in_team,
         cap_used,
-        transfers_left,
+        effective_transfers_left,
         in_bank,
         decay,
         gap,
         max_time,
         transfer_penalty,
+        hit_cost,
+        weekly_hit_limit,
         first_gw,
         first_gd,
         final_gw,
         final_gd,
+        current_api_gw,
         iteration=0,
         iteration_criteria=iteration_criteria,
         iteration_difference=iteration_difference,
@@ -488,7 +492,7 @@ def main(
                 print(f"Error saving Excel file: {e}")
 
         if settings.get("print_squads", True):
-            print_squad_lineups(res, in_bank, transfers_left, transfer_penalty)
+            print_squad_lineups(res, in_bank, effective_transfers_left, hit_cost)
 
     if settings.get("print_transfer_chip_summary", True):
         print("\n\n\nTransfer Overview")
@@ -754,6 +758,8 @@ def calculate_fts(transfers, next_gd, as_gds, wc_gds, transfer_periods):
 
 
 def read_team_json():
+    current_gw = first_gw
+
     if team_data == "json":
         with open("../data/team.json") as f:
             d = json.load(f)
@@ -765,13 +771,26 @@ def read_team_json():
                 chip["name"] == "phcapt" and chip["status_for_entry"] in ["played"]
                 for chip in d["chips"]
             )
-            transfers_left = 2 - d["transfers"]["made"]
+            transfers_left = max(0, 2 - d["transfers"]["made"])
             in_bank = d["transfers"]["bank"]
+            if "current_event" in d:
+                current_gw = d["current_event"]
+
     elif team_data == "id":
         BASE_URL = "https://nbafantasy.nba.com/api/"
         with requests.Session() as session:
             static_url = f"{BASE_URL}/bootstrap-static/"
             static = session.get(static_url).json()
+
+            current_event_obj = next(
+                (x for x in static["events"] if x["is_current"]), None
+            )
+            if current_event_obj:
+                current_gw = current_event_obj["id"]
+            else:
+                next_event = next((x for x in static["events"] if x["is_next"]), None)
+                current_gw = next_event["id"] - 1 if next_event else 1
+
             element_to_type_dict = {
                 x["id"]: x["element_type"] for x in static["elements"]
             }
@@ -834,10 +853,10 @@ def read_team_json():
             [pick["element"], pick["selling_price"]] for pick in my_data["picks"]
         ]
         cap_used = gw_cap_used
-        transfers_left = 2 - my_data["transfers"]["made"]
+        transfers_left = max(0, 2 - my_data["transfers"]["made"])
         in_bank = my_data["transfers"]["bank"]
 
-    return (in_team, in_team_sell_price, cap_used, transfers_left, in_bank)
+    return (in_team, in_team_sell_price, cap_used, transfers_left, in_bank, current_gw)
 
 
 if __name__ == "__main__":
@@ -859,7 +878,6 @@ if __name__ == "__main__":
         use_wc,
         use_as,
         booked_transfers,
-        chip_limits,
         num_iterations,
         iteration_criteria,
         iteration_difference,
@@ -867,5 +885,7 @@ if __name__ == "__main__":
         gap,
         max_time,
         transfer_penalty,
+        hit_cost,
+        weekly_hit_limit,
         ev_sheet,
     )

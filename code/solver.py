@@ -27,10 +27,13 @@ def nba_solver(
     gap,
     max_time,
     transfer_penalty,
+    hit_cost,
+    weekly_hit_limit,
     first_gw,
     first_gd,
     final_gw,
     final_gd,
+    current_api_gw,
     iteration=0,
     previous_solutions=None,
     iteration_criteria="",
@@ -127,6 +130,12 @@ def nba_solver(
     cap_var = {}
     transfer_var = {}
 
+    penalized_transfers = {}
+    for w in week_day_dict.keys():
+        penalized_transfers[w] = model.add_variable(
+            name=f"pt_{w}", lb=0, vartype=so.integer
+        )
+
     for i in player_ids:
         for w, d in all_week_days:
             squad_var[i, w, d] = model.add_variable(
@@ -203,19 +212,32 @@ def nba_solver(
                     + (
                         points[(i, a, b)]
                         * (squad_var[i, a, b] - team_var[i, a, b])
-                        * 0.99
+                        * 0.05
                     )
                 )
                 if f"{a}_{b}" in use_as
                 else (
                     (points[(i, a, b)] * team_var[i, a, b])
                     + (points[(i, a, b)] * cap_var[i, a, b])
-                    - (transfer_var[i, a, b] * penalty_dict[a][b] * decay_dict[a][b])
                 )
             )
+            * decay_dict[a][b]
             for a in week_day_dict.keys()
             for b in week_day_dict[a]
             for i in player_ids
+        )
+
+        objective_expr -= so.expr_sum(
+            transfer_var[i, a, b] * penalty_dict.get(a, {}).get(b, 0) * decay_dict[a][b]
+            for a in week_day_dict.keys()
+            for b in week_day_dict[a]
+            for i in player_ids
+            if a in penalty_dict and b in penalty_dict[a]
+        )
+
+        objective_expr -= so.expr_sum(
+            hit_cost * penalized_transfers[w] * decay_dict[w][min(week_day_dict[w])]
+            for w in week_day_dict.keys()
         )
 
     model.set_objective(-objective_expr, sense="N", name="total_points")
@@ -438,25 +460,26 @@ def nba_solver(
                                 name=f"transfer_default_{i}_{a}_{b}",
                             )
 
-            if a > current_week:
-                model.add_constraint(
-                    so.expr_sum(
-                        transfer_var[i, a, b]
-                        for b in week_day_dict[a]
-                        for i in player_ids
-                    )
-                    <= 2,
-                    name=f"transfer_limit_{a}",
-                )
+            total_transfers_in_week = so.expr_sum(
+                transfer_var[i, a, b] for b in week_day_dict[a] for i in player_ids
+            )
+
+            if a == current_week:
+                limit = transfers_left
             else:
+                limit = 2
+
+            transfer_diff = total_transfers_in_week - limit
+
+            model.add_constraint(
+                penalized_transfers[a] >= transfer_diff,
+                name=f"penalized_transfer_count_{a}",
+            )
+
+            if weekly_hit_limit is not None and str(weekly_hit_limit).strip() != "":
+                limit_val = int(weekly_hit_limit)
                 model.add_constraint(
-                    so.expr_sum(
-                        transfer_var[i, a, b]
-                        for b in week_day_dict[a]
-                        for i in player_ids
-                    )
-                    <= transfers_left,
-                    name=f"transfer_limit_current_{a}",
+                    penalized_transfers[a] <= limit_val, name=f"pt_limit_{a}"
                 )
 
     for i in locked:
@@ -475,13 +498,21 @@ def nba_solver(
     is_allstar_active_today = first_day_str in use_as
 
     if not is_wildcard_active_today and not is_allstar_active_today and not day_solve:
+        if weekly_hit_limit is not None and str(weekly_hit_limit).strip() != "":
+            max_hits_allowed = int(weekly_hit_limit)
+        else:
+            max_hits_allowed = 10
+
+        max_moves_allowed = transfers_left + max_hits_allowed
+        min_players_to_keep = max(0, 10 - max_moves_allowed)
+
         model.add_constraint(
             so.expr_sum(
                 squad_var[i, current_week, current_day]
                 for i in in_team
                 if i in player_ids
             )
-            >= 8,
+            >= min_players_to_keep,
             name="min_players_from_current",
         )
 
@@ -549,7 +580,10 @@ def nba_solver(
         solution = solver_instance.getSolution()
 
         model_status = solver_instance.getModelStatus()
-        if model_status != highspy.HighsModelStatus.kOptimal:
+        if (
+            model_status != highspy.HighsModelStatus.kOptimal
+            and model_status != highspy.HighsModelStatus.kTimeLimit
+        ):
             if iteration_num > 0:
                 break
             else:
@@ -660,8 +694,14 @@ def nba_solver(
         )
         first_day_buys_str = ", ".join(buy_summary_names) if buy_summary_names else "-"
 
+        hits_per_gw = {}
+        for w in week_day_dict.keys():
+            val = penalized_transfers[w].get_value()
+            hits_per_gw[w] = int(round(val)) if val is not None else 0
+
         result = {
             "iter": iteration_num,
+            "hits": hits_per_gw,
             "score": -model.get_objective_value(),
             "status": "Optimal",
             "sell": first_day_sells_str,
@@ -792,7 +832,7 @@ def nba_solver(
             )
 
         elif iteration_criteria == "this_day_lineup":
-            # the only which uses iteration_difference i think
+            # the only one which uses iteration_difference i think
             if first_day_lineup_ids:
                 model.add_constraint(
                     so.expr_sum(
