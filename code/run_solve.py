@@ -165,6 +165,10 @@ def print_squad_lineups(result, initial_in_bank, initial_transfers_left, hit_cos
     true_prev_col = "current"
     total_calculated_xpts = 0.0
 
+    current_itb = initial_in_bank / 10
+    current_loop_week = -1
+    week_ft_remaining = 0
+
     for i in range(1, len(squad_day_cols)):
         curr_col = squad_day_cols[i]
         current_day_str = curr_col.replace("squad_", "")
@@ -217,10 +221,8 @@ def print_squad_lineups(result, initial_in_bank, initial_transfers_left, hit_cos
         print(f"Gameweek {a} - Day {b}{chip_played_str}{hit_msg} : ")
 
         itb_before_this_day = current_itb
-        itb_before_this_day = itb_before_this_day / 10
 
         itb_after_this_day = itb_before_this_day + cost_of_sells - cost_of_buys
-        itb_after_this_day = itb_after_this_day / 10
 
         ft_this_day_str = str(week_ft_remaining)
 
