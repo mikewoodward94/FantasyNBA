@@ -22,7 +22,11 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 pd.set_option("mode.chained_assignment", None)
 
-gws_to_run = [4, 5, 6]  # Just set to any GW(s), it should handle the days automatically
+gws_to_run = [
+    7,
+    8,
+    9,
+]  # Just set to any GW(s), it should handle the days automatically
 
 
 # %% functions
@@ -201,6 +205,7 @@ def matchup_stats(home, away, matchup, team):
     game_pace *= (
         99 / matchup["adj_pace"].mean()
     )  # 99 for regular season, 95 for the playoffs
+    league_avg_ortg = 115  # 115 regular season, 113 playoffs
 
     home_pace_factor = (
         game_pace / matchup.loc[matchup["team_alias"] == home, "adj_pace"].values[0]
@@ -277,15 +282,32 @@ def matchup_stats(home, away, matchup, team):
         * team["pace factor"]
     )
 
-    rating_adj = (
-        matchup.loc[matchup["team_alias"] == home, "rating"].values[0]
-        - matchup.loc[matchup["team_alias"] == away, "rating"].values[0]
-        + 2.5
-    )
+    rating_adj = 2.5  # + matchup.loc[matchup['team_alias']==home,'rating'].values[0] - matchup.loc[matchup['team_alias']==away,'rating'].values[0]
+
     home_pts = team.loc[team["team_alias"] == home, "pts"].sum()
+    exp_home_pts = (
+        (
+            league_avg_ortg
+            + matchup.loc[matchup["team_alias"] == home, "adj_off"].values[0]
+            - matchup.loc[matchup["team_alias"] == away, "adj_def"].values[0]
+        )
+        * (game_pace / 100)
+    ) + rating_adj / 2
     away_pts = team.loc[team["team_alias"] == away, "pts"].sum()
-    home_adj = (home_pts + (rating_adj - (home_pts - away_pts)) / 2) / home_pts
-    away_adj = (away_pts - (rating_adj - (home_pts - away_pts)) / 2) / away_pts
+    exp_away_pts = (
+        (
+            league_avg_ortg
+            + matchup.loc[matchup["team_alias"] == away, "adj_off"].values[0]
+            - matchup.loc[matchup["team_alias"] == home, "adj_def"].values[0]
+        )
+        * (game_pace / 100)
+    ) - rating_adj / 2
+    home_adj = (
+        exp_home_pts / home_pts
+    )  # (home_pts + (rating_adj - (home_pts - away_pts))/2)/home_pts
+    away_adj = (
+        exp_away_pts / away_pts
+    )  # (away_pts - (rating_adj - (home_pts - away_pts))/2)/away_pts
 
     team.loc[team["team_alias"] == home, "pts"] *= home_adj
     team.loc[team["team_alias"] == home, "ast"] *= home_adj
