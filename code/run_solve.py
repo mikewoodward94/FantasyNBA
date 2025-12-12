@@ -460,6 +460,17 @@ def main(
         print("Loading existing EV sheet")
         player_data = pd.read_csv("../data/NBA_EV.csv")
 
+    if in_team_sell_price:
+        print("\nApplying selling prices...")
+        sell_price_map = {p[0]: p[1] for p in in_team_sell_price}
+
+        def apply_sell_price(row):
+            if row["id"] in sell_price_map:
+                return sell_price_map[row["id"]]
+            return row["now_cost"]
+
+        player_data["now_cost"] = player_data.apply(apply_sell_price, axis=1)
+
     response = nba_solver(
         player_data,
         locked,
