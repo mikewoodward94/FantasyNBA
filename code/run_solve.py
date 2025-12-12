@@ -439,6 +439,23 @@ def main(
         print("EV generated and output to NBA_EV.csv")
     elif ev_sheet == "mou":
         player_data = pd.read_csv("../data/mou.csv")
+        pt_cols = [c for c in player_data.columns if c.startswith("Gameweek")]
+
+        player_data["ev_across"] = (
+            player_data[pt_cols].replace(0, np.nan).mean(axis=1).fillna(0)
+        )
+
+        player_data["value"] = player_data["ev_across"] / player_data["now_cost"]
+
+        print(f"Players before value cutoff: {len(player_data)}")
+        player_data = player_data[
+            (player_data["value"] >= value_cutoff)
+            | (player_data["id"].isin(in_team))
+            | (player_data["id"].isin(locked))
+        ]
+        print(f"Players after value cutoff: {len(player_data)}")
+
+        player_data = player_data.drop(columns=["ev_across", "value"])
     else:
         print("Loading existing EV sheet")
         player_data = pd.read_csv("../data/NBA_EV.csv")
@@ -715,24 +732,24 @@ gw_period = [
     {"start_event": 28, "stop_event": 34},
     {"start_event": 35, "stop_event": 40},
     {"start_event": 41, "stop_event": 47},
-    {"start_event": 48, "stop_event": 51},
-    {"start_event": 52, "stop_event": 56},
-    {"start_event": 57, "stop_event": 62},
-    {"start_event": 63, "stop_event": 69},
-    {"start_event": 70, "stop_event": 76},
-    {"start_event": 77, "stop_event": 83},
-    {"start_event": 84, "stop_event": 90},
-    {"start_event": 91, "stop_event": 97},
-    {"start_event": 98, "stop_event": 104},
-    {"start_event": 105, "stop_event": 108},
+    {"start_event": 48, "stop_event": 54},
+    {"start_event": 55, "stop_event": 60},
+    {"start_event": 61, "stop_event": 66},
+    {"start_event": 67, "stop_event": 73},
+    {"start_event": 74, "stop_event": 80},
+    {"start_event": 81, "stop_event": 87},
+    {"start_event": 88, "stop_event": 94},
+    {"start_event": 95, "stop_event": 101},
+    {"start_event": 102, "stop_event": 108},
     {"start_event": 109, "stop_event": 112},
-    {"start_event": 113, "stop_event": 119},
-    {"start_event": 120, "stop_event": 126},
-    {"start_event": 127, "stop_event": 133},
-    {"start_event": 134, "stop_event": 140},
-    {"start_event": 141, "stop_event": 147},
-    {"start_event": 148, "stop_event": 154},
-    {"start_event": 155, "stop_event": 160},
+    {"start_event": 113, "stop_event": 116},
+    {"start_event": 117, "stop_event": 123},
+    {"start_event": 124, "stop_event": 130},
+    {"start_event": 131, "stop_event": 137},
+    {"start_event": 138, "stop_event": 144},
+    {"start_event": 145, "stop_event": 151},
+    {"start_event": 152, "stop_event": 158},
+    {"start_event": 159, "stop_event": 164},
 ]
 
 

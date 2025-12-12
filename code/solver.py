@@ -317,6 +317,7 @@ def nba_solver(
                     pass
 
     # constraints
+
     for a in week_day_dict.keys():
         if cap_used and a == current_week:
             model.add_constraint(
@@ -338,8 +339,9 @@ def nba_solver(
         for b in week_day_dict[a]:
             current_day_str = f"{a}_{b}"
             is_this_day_allstar = current_day_str in use_as
+            is_this_day_wildcard = current_day_str in use_wc
 
-            if is_this_day_allstar:
+            if is_this_day_allstar or is_this_day_wildcard:
                 model.add_constraint(
                     so.expr_sum(cap_var[i, a, b] for i in player_ids) == 0,
                     name=f"no_cap_as_{a}_{b}",
