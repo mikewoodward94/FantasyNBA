@@ -787,8 +787,8 @@ def read_team_json():
                 [pick["element"], pick["selling_price"]] for pick in d["picks"]
             ]
             cap_used = any(
-                chip["name"] == "phcapt" and chip["status_for_entry"] in ["played"]
-                for chip in d["chips"]
+                chip["name"] == "phcapt" and chip.get("status_for_entry") == "played"
+                for chip in d.get("chips", [])
             )
             transfers_left = max(0, 2 - d["transfers"]["made"])
             in_bank = d["transfers"]["bank"]
@@ -801,79 +801,95 @@ def read_team_json():
             static_url = f"{BASE_URL}/bootstrap-static/"
             static = session.get(static_url).json()
 
-            current_event_obj = next(
-                (x for x in static["events"] if x["is_current"]), None
-            )
-            if current_event_obj:
-                current_gw = current_event_obj["id"]
-            else:
-                next_event = next((x for x in static["events"] if x["is_next"]), None)
-                current_gw = next_event["id"] - 1 if next_event else 1
+            next_event = next((x for x in static["events"] if x["is_next"]), None)
+            curr_event = next((x for x in static["events"] if x["is_current"]), None)
 
-            element_to_type_dict = {
-                x["id"]: x["element_type"] for x in static["elements"]
-            }
-            next_gd = next(x for x in static["events"] if x["is_next"])["id"]
-            start_prices = {
-                x["id"]: x["now_cost"] - x["cost_change_start"]
+            if next_event:
+                next_gd = next_event["id"]
+                current_gw = next_event["id"]
+                picks_gw = next_event["id"] - 1
+            elif curr_event:
+                next_gd = curr_event["id"] + 1
+                current_gw = curr_event["id"]
+                picks_gw = curr_event["id"]
+            else:
+                next_gd = 1
+                current_gw = 1
+                picks_gw = 1
+
+            if picks_gw < 1:
+                picks_gw = 1
+
+            player_db = {
+                x["id"]: {
+                    "now_cost": x["now_cost"],
+                    "start_cost": x["now_cost"] - x["cost_change_start"],
+                    "name": f"{x['first_name']} {x['second_name']}",
+                    "element_type": x["element_type"],
+                }
                 for x in static["elements"]
             }
-            gd1_url = f"{BASE_URL}/entry/{team_id}/event/1/picks/"
-            gd1 = session.get(gd1_url).json()
-            if gd1 == {"detail": "Not found."}:
-                gd1_url = f"{BASE_URL}/entry/{team_id}/event/2/picks/"
-                gd1 = session.get(gd1_url).json()
-            else:
-                pass
+
+            history_url = f"{BASE_URL}/entry/{team_id}/history/"
+            history_data = session.get(history_url).json()
+            chips_list = history_data.get("chips", [])
+
+            as_gds = [x["event"] for x in chips_list if x["name"] == "rich"]
+            wc_gds = [x["event"] for x in chips_list if x["name"] == "wildcard"]
+
             transfers_url = f"{BASE_URL}/entry/{team_id}/transfers/"
-            transfers = session.get(transfers_url).json()[::-1]
-            chips_url = f"{BASE_URL}/entry/{team_id}/history/"
-            chips = session.get(chips_url).json()["chips"]
-            as_gds = [x["event"] for x in chips if x["name"] == "rich"]
-            wc_gds = [x["event"] for x in chips if x["name"] == "wildcard"]
-            squad = {x["element"]: start_prices[x["element"]] for x in gd1["picks"]}
-            itb = 1000 - sum(squad.values())
-            for t in transfers:
-                if t["event"] in as_gds:
-                    continue
-                itb += t["element_out_cost"]
-                itb -= t["element_in_cost"]
-                if t["element_in"]:
-                    squad[t["element_in"]] = t["element_in_cost"]
-                if t["element_out"]:
-                    del squad[t["element_out"]]
+            transfers = session.get(transfers_url).json()
+
             fts = calculate_fts(transfers, next_gd, as_gds, wc_gds, gw_period)
-            made = 2 - fts
-            my_data = {
-                "chips": chips,
-                "picks": [],
-                "team_id": team_id,
-                "transfers": {"bank": itb, "limit": 2, "made": made},
-            }
-            for player_id, purchase_price in squad.items():
-                now_cost = next(x for x in static["elements"] if x["id"] == player_id)[
-                    "now_cost"
-                ]
-                diff = now_cost - purchase_price
-                if diff > 0:
-                    selling_price = purchase_price + diff // 2
+
+            purchase_map = {pid: v["start_cost"] for pid, v in player_db.items()}
+
+            for t in sorted(transfers, key=lambda x: x["time"]):
+                purchase_map[t["element_in"]] = t["element_in_cost"]
+
+            picks_url = f"{BASE_URL}/entry/{team_id}/event/{picks_gw}/picks/"
+            picks_res = session.get(picks_url).json()
+
+            if "detail" in picks_res:
+                picks_url = f"{BASE_URL}/entry/{team_id}/event/{picks_gw - 1}/picks/"
+                picks_res = session.get(picks_url).json()
+
+            current_picks = picks_res["picks"]
+            in_bank = picks_res["entry_history"]["bank"]
+
+            my_data = {"picks": []}
+
+            for p in current_picks:
+                pid = p["element"]
+                p_data = player_db.get(pid, {})
+
+                now_cost = p_data.get("now_cost", 0)
+                pur_price = purchase_map.get(pid, p_data.get("start_cost", 0))
+                etype = p_data.get("element_type", 2)
+
+                if now_cost > pur_price:
+                    profit = now_cost - pur_price
+                    sell_price = pur_price + (profit // 2)
                 else:
-                    selling_price = now_cost
+                    sell_price = now_cost
+
+                if sell_price > now_cost:
+                    sell_price = now_cost
+
                 my_data["picks"].append(
-                    {
-                        "element": player_id,
-                        "purchase_price": purchase_price,
-                        "selling_price": selling_price,
-                        "element_type": element_to_type_dict[player_id],
-                    }
+                    {"element": pid, "selling_price": sell_price, "element_type": etype}
                 )
+
         in_team = [pick["element"] for pick in my_data["picks"]]
         in_team_sell_price = [
             [pick["element"], pick["selling_price"]] for pick in my_data["picks"]
         ]
-        cap_used = gw_cap_used
-        transfers_left = max(0, 2 - my_data["transfers"]["made"])
-        in_bank = my_data["transfers"]["bank"]
+
+        cap_used = any(chip["name"] == "phcapt" for chip in chips_list)
+        if gw_cap_used:
+            cap_used = True
+
+        transfers_left = fts
 
     return (in_team, in_team_sell_price, cap_used, transfers_left, in_bank, current_gw)
 
