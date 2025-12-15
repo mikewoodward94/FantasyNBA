@@ -797,10 +797,7 @@ def read_team_json():
             in_team_sell_price = [
                 [pick["element"], pick["selling_price"]] for pick in d["picks"]
             ]
-            cap_used = any(
-                chip["name"] == "phcapt" and chip.get("status_for_entry") == "played"
-                for chip in d.get("chips", [])
-            )
+            cap_used = gw_cap_used
             transfers_left = max(0, 2 - d["transfers"]["made"])
             in_bank = d["transfers"]["bank"]
             if "current_event" in d:
@@ -896,9 +893,7 @@ def read_team_json():
             [pick["element"], pick["selling_price"]] for pick in my_data["picks"]
         ]
 
-        cap_used = any(chip["name"] == "phcapt" for chip in chips_list)
-        if gw_cap_used:
-            cap_used = True
+        cap_used = gw_cap_used
 
         transfers_left = fts
 
