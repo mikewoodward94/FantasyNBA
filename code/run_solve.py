@@ -438,7 +438,26 @@ def main(
         player_data.to_csv("../data/NBA_EV.csv", index=False)
         print("EV generated and output to NBA_EV.csv")
     elif ev_sheet == "mou":
-        player_data = pd.read_csv("../data/mou.csv")
+        try:
+            player_data = pd.read_csv(
+                "../data/mou.csv", encoding="utf-8-sig", engine="python"
+            )
+        except Exception:
+            player_data = pd.read_csv(
+                "../data/mou.csv", encoding="ISO-8859-1", engine="python"
+            )
+
+        player_data["id"] = (
+            pd.to_numeric(player_data["id"], errors="coerce").fillna(0).astype(int)
+        )
+        player_data["element_type"] = (
+            pd.to_numeric(player_data["element_type"], errors="coerce")
+            .fillna(0)
+            .astype(int)
+        )
+
+        player_data = player_data[player_data["element_type"].isin([1, 2])]
+
         pt_cols = [c for c in player_data.columns if c.startswith("Gameweek")]
 
         player_data["ev_across"] = (
@@ -447,14 +466,7 @@ def main(
 
         player_data["value"] = player_data["ev_across"] / player_data["now_cost"]
 
-        print(f"Players before value cutoff: {len(player_data)}")
-        player_data = player_data[
-            (player_data["value"] >= value_cutoff)
-            | (player_data["id"].isin(in_team))
-            | (player_data["id"].isin(locked))
-        ]
-        print(f"Players after value cutoff: {len(player_data)}")
-
+        # Drop helper columns
         player_data = player_data.drop(columns=["ev_across", "value"])
     else:
         print("Loading existing EV sheet")

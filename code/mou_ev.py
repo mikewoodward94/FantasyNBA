@@ -23,9 +23,10 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 pd.set_option("mode.chained_assignment", None)
 
 gws_to_run = [
-    7,
-    8,
-    9,
+    17,
+    18,
+    19,
+    20,
 ]  # Just set to any GW(s), it should handle the days automatically
 
 
@@ -539,8 +540,7 @@ gw_pivot = gw_pivot.merge(
 gw_pivot = gw_pivot.drop("code", axis=1)
 gw_pivot["efficiency"] = gw_pivot["EV total"] / gw_pivot["now_cost"]
 
-
-gw_pivot["id"] = pd.to_numeric(gw_pivot["id"], errors="coerce")
+gw_pivot["id"] = pd.to_numeric(gw_pivot["id"], errors="coerce").fillna(0).astype(int)
 gw_pivot = gw_pivot.sort_values(by="id", ascending=True, na_position="last")
 
 all_cols = gw_pivot.columns.tolist()
@@ -551,4 +551,5 @@ gw_pivot = gw_pivot[final_cols]
 gw_pivot = gw_pivot.fillna(0)
 gw_pivot = gw_pivot.drop("player_id", axis=1)
 gw_pivot = gw_pivot.rename(columns={"player_name": "name"})
-gw_pivot.to_csv(f"{output_dir}/mou.csv", index=False)
+gw_pivot = gw_pivot[gw_pivot["id"] != 0]
+gw_pivot.to_csv(f"{output_dir}/mou.csv", index=False, encoding="utf-8-sig")
