@@ -466,6 +466,12 @@ def main(
 
         player_data["value"] = player_data["ev_across"] / player_data["now_cost"]
 
+        player_data = player_data[
+            (player_data["value"] >= value_cutoff)
+            | (player_data["id"].isin(in_team))
+            | (player_data["id"].isin(locked))
+        ]
+
         # Drop helper columns
         player_data = player_data.drop(columns=["ev_across", "value"])
     else:
