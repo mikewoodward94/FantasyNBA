@@ -32,6 +32,7 @@ def load_settings():
 settings = load_settings()
 (
     info_source,
+    value_cutoff,
     decay,
     horizon,
     horizon_start,
@@ -61,6 +62,7 @@ settings = load_settings()
     no_team,
 ) = (
     settings["info_source"],
+    settings.get("value_cutoff"),
     settings["decay"],
     settings["horizon"],
     settings.get("start"),
@@ -310,6 +312,7 @@ def print_squad_lineups(result, initial_in_bank, initial_transfers_left, hit_cos
 
 def main(
     info_source,
+    value_cutoff,
     decay,
     horizon,
     horizon_start,
@@ -362,6 +365,12 @@ def main(
     player_data = read_ev_sheet(ev_sheet)
     check_ev_coverage(player_data, static, first_gw, first_gd, final_gw, final_gd)
     player_data = refresh_prices(player_data, player_info)
+    player_data = apply_value_cutoff(
+        player_data,
+        value_cutoff,
+        horizon_columns(static, first_gw, first_gd, final_gw, final_gd),
+        set(in_team) | set(locked),
+    )
 
     for gd in gds_to_zero:
         if gd in player_data.columns:
@@ -555,6 +564,32 @@ def run_mou_ev():
             "solve off the existing sheet."
         )
     print("=== EV sheet rebuilt ===\n")
+
+
+def apply_value_cutoff(player_data, value_cutoff, horizon_cols, always_keep):
+    """Optionally drop players below a points-per-cost threshold.
+
+    Off by default, because it is a worse way to speed up a solve than raising
+    "gap": it shrinks the pool the solver optimises over, so it can only lower
+    the ceiling, and it is aimed badly - you field 5 of 10 and benched EV
+    barely counts, so a cheap player you never start has a poor ratio by
+    construction, which is exactly what makes him useful filler.
+    """
+    if not value_cutoff:
+        return player_data
+
+    cols = [c for c in horizon_cols if c in player_data.columns]
+    if not cols:
+        return player_data
+
+    # average over the gamedays a player features on, so someone whose team
+    # plays twice is not punished against someone who plays four times
+    ev_across = player_data[cols].replace(0, np.nan).mean(axis=1).fillna(0)
+    value = ev_across / player_data["now_cost"]
+
+    kept = player_data[(value >= value_cutoff) | player_data["id"].isin(always_keep)]
+    print(f"Value cutoff {value_cutoff}: {len(kept)} of {len(player_data)} players")
+    return kept
 
 
 def read_ev_sheet(ev_sheet):
@@ -1053,6 +1088,7 @@ def read_team_json(fallback_gw):
 if __name__ == "__main__":
     main(
         info_source,
+        value_cutoff,
         decay,
         horizon,
         horizon_start,

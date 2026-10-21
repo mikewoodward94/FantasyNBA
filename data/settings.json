@@ -4,6 +4,7 @@
 "end": null,
 "refresh_ev": true,
 
+"value_cutoff": null,
 "decay": 0.97,
 "transfer_penalty": {"1": 24, "2": 19, "3": 14, "4": 8, "5": 3, "6": 0, "7": 0},
 "locked": [],

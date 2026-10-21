@@ -72,6 +72,8 @@ You can find default settings in data/settings.json
 ### EV Settings
 `decay`: How much EV is decayed by Game Day.
 
+`value_cutoff`: Optional points-per-cost threshold; players below it are left out of the solve, except anyone in `locked` or already in your squad. `null` (the default) keeps everyone. It makes a solve faster by shrinking what the solver chooses from, which also lowers the best squad it can reach, so prefer raising `gap` instead. Measured over 3 gameweeks, no cutoff at a 2% gap beat every cutoff solved to optimality, on both time and squad quality.
+
 `transfer_penalty`: Dictionary of EV penalty applied if transfer occurs on that Gameday.
 
 ### Horizon

@@ -595,10 +595,26 @@ def nba_solver(
         solution = solver_instance.getSolution()
 
         model_status = solver_instance.getModelStatus()
-        if (
-            model_status != highspy.HighsModelStatus.kOptimal
-            and model_status != highspy.HighsModelStatus.kTimeLimit
-        ):
+
+        # A time limit can be reached before any feasible squad is found, in
+        # which case there is no solution to read back.
+        has_values = (
+            bool(getattr(solution, "value_valid", False))
+            and len(solution.col_value) > 0
+        )
+        usable = has_values and model_status in (
+            highspy.HighsModelStatus.kOptimal,
+            highspy.HighsModelStatus.kTimeLimit,
+        )
+
+        if not usable:
+            if model_status == highspy.HighsModelStatus.kTimeLimit:
+                print(
+                    "Time limit reached before any feasible squad was found. "
+                    "Raise 'gap', shorten 'horizon', or raise 'max_time'."
+                )
+            else:
+                print(f"No usable solution: solver returned {model_status}")
             if iteration_num > 0:
                 break
             else:

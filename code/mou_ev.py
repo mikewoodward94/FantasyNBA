@@ -99,12 +99,19 @@ def extract_epm_data():
 
 
 def modify_strings(list_of_s):
+    """Turn the page's JavaScript object literals into Python literals.
+
+    The keys are bare identifiers (season:2027), so they need quoting - but
+    only where a key actually appears. Replacing every comma and colon also
+    rewrites the inside of quoted values, which broke on player names holding
+    a comma, such as "Ernest Udeh, Jr.".
+    """
     mod_list = []
     for s in list_of_s:
-        s = s.replace(",", "," + '"')
-        s = s.replace(":", '"' + ":")
-        s = s.replace("{", '{"')
-        s = s.replace("null", "0")
+        s = re.sub(r"([{,])\s*([A-Za-z_]\w*)\s*:", r'\1"\2":', s)
+        s = re.sub(r"\bnull\b", "0", s)
+        s = re.sub(r"\btrue\b", "True", s)
+        s = re.sub(r"\bfalse\b", "False", s)
         mod_list.append(s)
     return mod_list
 
@@ -115,6 +122,7 @@ def convert_string_list_to_dict(string_list):
     into a list of actual Python dictionaries.
     """
     result_dicts = []
+    skipped = []
     for s in string_list:
         try:
             # Safely evaluate the string as a Python literal (dictionary)
@@ -123,8 +131,17 @@ def convert_string_list_to_dict(string_list):
                 result_dicts.append(evaluated_dict)
             else:
                 print(f"Warning: '{s}' did not evaluate to a dictionary.")
-        except (ValueError, SyntaxError) as e:
-            print(f"Error evaluating string '{s}': {e}")
+        except (ValueError, SyntaxError):
+            # name the players that drop out, rather than dumping the record
+            name = re.search(r'"player_name"\s*:\s*"([^"]*)"', s)
+            skipped.append(name.group(1) if name else s[:60])
+
+    if skipped:
+        print(
+            f"Warning: skipped {len(skipped)} unparseable player record(s): "
+            + ", ".join(skipped[:5])
+            + (" ..." if len(skipped) > 5 else "")
+        )
     return result_dicts
 
 
