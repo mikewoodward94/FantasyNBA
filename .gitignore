@@ -169,3 +169,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# FantasyNBA: generated data, solver scratch and local tooling
+data/mou.csv
+data/player_info.csv
+output/
+code/tmp/
+bin/
