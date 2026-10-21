@@ -44,6 +44,12 @@ def nba_solver(
     money = team_value + in_bank
     print(f"Money: {money}")
 
+    # No squad to start from (first gameday of the season, or a forced fresh
+    # build): the opening 10 picks are free rather than 10 transfers.
+    has_no_team = len(in_team) == 0
+    if has_no_team:
+        print("No existing squad - the first gameday is a free squad build")
+
     pristine_player_ids = data["id"].tolist()
     pristine_in_team_flag = {
         id: 1 if id in in_team else 0 for id in pristine_player_ids
@@ -63,7 +69,7 @@ def nba_solver(
             f"CRITICAL ERROR: The following players from 'in_team' are missing from the EV data (player_ids): {missing_players_in_solver}"
         )
         print(
-            "This is likely due to the 'value_cutoff' setting or an incomplete 'NBA_EV.csv' file."
+            "This is likely due to the 'value_cutoff' setting or an incomplete EV sheet."
         )
         print("The solver cannot continue as this will result in a 9-player team.")
         raise ValueError(f"Missing players from in_team: {missing_players_in_solver}")
@@ -431,8 +437,10 @@ def nba_solver(
                         if prev_day_str in use_as:
                             is_prev_day_allstar = True
 
+                free_build = is_first_day and has_no_team
+
                 for i in player_ids:
-                    if is_this_day_wildcard or is_this_day_allstar:
+                    if is_this_day_wildcard or is_this_day_allstar or free_build:
                         model.add_constraint(
                             transfer_var[i, a, b] == 0,
                             name=f"no_transfer_chip_{i}_{a}_{b}",
@@ -499,7 +507,12 @@ def nba_solver(
     is_wildcard_active_today = first_day_str in use_wc
     is_allstar_active_today = first_day_str in use_as
 
-    if not is_wildcard_active_today and not is_allstar_active_today and not day_solve:
+    if (
+        not is_wildcard_active_today
+        and not is_allstar_active_today
+        and not day_solve
+        and not has_no_team
+    ):
         if weekly_hit_limit is not None and str(weekly_hit_limit).strip() != "":
             max_hits_allowed = int(weekly_hit_limit)
         else:
@@ -716,6 +729,7 @@ def nba_solver(
             "current_week": current_week,
             "current_day": current_day,
             "first_day_lineup_ids": first_day_lineup_ids,
+            "no_team": has_no_team,
             "use_wc": use_wc,
             "use_as": use_as,
             "picks_df": combined_df,
@@ -732,7 +746,17 @@ def nba_solver(
         if num_iterations == 1:
             return solutions
 
-        if iteration_criteria == "this_day_transfer_in":
+        effective_criteria = iteration_criteria
+        if has_no_team and iteration_criteria != "this_day_lineup":
+            # a fresh build makes no transfers on the first day, so the
+            # transfer-based criteria have nothing to vary
+            print(
+                f"No squad to transfer from, differentiating iterations by "
+                f"lineup instead of '{iteration_criteria}'"
+            )
+            effective_criteria = "this_day_lineup"
+
+        if effective_criteria == "this_day_transfer_in":
             transferred_in_players = [
                 p
                 for p in player_ids
@@ -759,7 +783,7 @@ def nba_solver(
                 name=f"iter_{iteration_num}_diff_transfer_in",
             )
 
-        elif iteration_criteria == "this_day_transfer_out":
+        elif effective_criteria == "this_day_transfer_out":
             eligible_out_players = [
                 p for p in player_ids if in_team_flag_for_solver[p] == 1
             ]
@@ -788,7 +812,7 @@ def nba_solver(
                 name=f"iter_{iteration_num}_diff_transfer_out",
             )
 
-        elif iteration_criteria == "this_day_transfer_in_out":
+        elif effective_criteria == "this_day_transfer_in_out":
             transferred_in_players = [
                 p
                 for p in player_ids
@@ -833,7 +857,7 @@ def nba_solver(
                 name=f"iter_{iteration_num}_diff_transfer_in_out",
             )
 
-        elif iteration_criteria == "this_day_lineup":
+        elif effective_criteria == "this_day_lineup":
             # the only one which uses iteration_difference i think
             if first_day_lineup_ids:
                 model.add_constraint(
