@@ -72,8 +72,6 @@ You can find default settings in data/settings.json
 ### EV Settings
 `decay`: How much EV is decayed by Game Day.
 
-`value_cutoff`: Average EV Divided by Player Cost threshold to be included in solve.
-
 `transfer_penalty`: Dictionary of EV penalty applied if transfer occurs on that Gameday.
 
 ### Horizon
@@ -137,9 +135,15 @@ quietly solving a shorter range.
 
 `hit_cost`: Set at `100` by default, can be tailored to your own *perception* of the cost of a points hit.
 
-`max_time`: Max time in seconds to allow for solve.
+`max_time`: A backstop, in seconds. It does not bound the wall clock: the
+solver only checks it between nodes, so a single expensive node can overshoot it
+several times over. Use `gap` to control how long a solve takes.
 
-`gap`: Optimality Gap.
+`gap`: How close to optimal a solution has to be before the solver stops, as a
+fraction. This is the setting that controls how long a solve takes. `0.02` stops
+at 2%, which is far inside the EV projections' own error and takes a couple of
+minutes; `0.0` demands a proof of optimality and can take hours for the same
+squad. Raise it if solves are slow, rather than cutting the player pool.
 
 `info_source`: Default is "API", but make this blank if you just want it to pull from saved CSVs.
 

@@ -1,11 +1,10 @@
 {
-"horizon": 4,
+"horizon": 3,
 "start": null,
 "end": null,
 "refresh_ev": true,
 
 "decay": 0.97,
-"value_cutoff": 0.2,
 "transfer_penalty": {"1": 24, "2": 19, "3": 14, "4": 8, "5": 3, "6": 0, "7": 0},
 "locked": [],
 "banned": [],
@@ -23,7 +22,7 @@
 "iteration_criteria": "this_day_transfer_in_out",
 "iteration_difference": 1,
 "max_time": 700,
-"gap": 0.0,
+"gap": 0.02,
 "info_source": "API",
 "team_data": "id",
 "team_id": 1,

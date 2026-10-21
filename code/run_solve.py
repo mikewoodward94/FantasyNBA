@@ -5,6 +5,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 import datetime
 from tabulate import tabulate  # type: ignore
 
@@ -31,7 +32,6 @@ def load_settings():
 settings = load_settings()
 (
     info_source,
-    value_cutoff,
     decay,
     horizon,
     horizon_start,
@@ -61,7 +61,6 @@ settings = load_settings()
     no_team,
 ) = (
     settings["info_source"],
-    settings["value_cutoff"],
     settings["decay"],
     settings["horizon"],
     settings.get("start"),
@@ -311,7 +310,6 @@ def print_squad_lineups(result, initial_in_bank, initial_transfers_left, hit_cos
 
 def main(
     info_source,
-    value_cutoff,
     decay,
     horizon,
     horizon_start,
@@ -365,8 +363,6 @@ def main(
     check_ev_coverage(player_data, static, first_gw, first_gd, final_gw, final_gd)
     player_data = refresh_prices(player_data, player_info)
 
-    pt_cols = [c for c in player_data.columns if c.startswith("Gameweek")]
-
     for gd in gds_to_zero:
         if gd in player_data.columns:
             player_data[gd] = np.where(
@@ -374,20 +370,6 @@ def main(
             )
         else:
             print(f"Warning: {gd!r} in gds_to_zero is not a column in the EV sheet")
-
-    # Average EV over the gamedays a player actually features on, so someone
-    # whose team plays twice is not punished against someone who plays four
-    # times when the value cutoff is applied.
-    ev_across = player_data[pt_cols].replace(0, np.nan).mean(axis=1).fillna(0)
-    value = ev_across / player_data["now_cost"]
-
-    print(f"Players before value cutoff: {len(player_data)}")
-    player_data = player_data[
-        (value >= value_cutoff)
-        | (player_data["id"].isin(in_team))
-        | (player_data["id"].isin(locked))
-    ]
-    print(f"Players after value cutoff: {len(player_data)}")
 
     if in_team_sell_price:
         print("\nApplying selling prices...")
@@ -485,10 +467,22 @@ def main(
     return response
 
 
+def fetch_json(url, attempts=3, pause=5):
+    for attempt in range(1, attempts + 1):
+        try:
+            r = requests.get(url, timeout=30)
+            r.raise_for_status()
+            return r.json()
+        except requests.exceptions.RequestException as e:
+            if attempt == attempts:
+                raise
+            print(f"  {type(e).__name__} on {url}, retry {attempt}/{attempts - 1}")
+            time.sleep(pause)
+
+
 def get_player_info():
     url = "https://nbafantasy.nba.com/api/bootstrap-static/"
-    r = requests.get(url)
-    json = r.json()
+    json = fetch_json(url)
     elements = pd.DataFrame(json["elements"])
     elements = elements[
         [
@@ -643,9 +637,9 @@ _static_cache = {}
 
 def get_static():
     if "data" not in _static_cache:
-        _static_cache["data"] = requests.get(
+        _static_cache["data"] = fetch_json(
             "https://nbafantasy.nba.com/api/bootstrap-static/"
-        ).json()
+        )
     return _static_cache["data"]
 
 
@@ -1059,7 +1053,6 @@ def read_team_json(fallback_gw):
 if __name__ == "__main__":
     main(
         info_source,
-        value_cutoff,
         decay,
         horizon,
         horizon_start,
