@@ -42,24 +42,32 @@ and it *should* all work.
 Solved csvs can be found in the `output` folder following a successful run.
 
 ## Data
-Player data in the repository is taken from Hashtag Basketball (as of 6/2/25), if you'd like to update this you can replace the content in hashtag_Season.csv by copying and pasting from here: https://hashtagbasketball.com/fantasy-basketball-rankings
+EV comes from `mou_ev.py` (thanks to Mou), which projects every player's expected points from
+Dunks and Threes EPM data plus the current injury report. Run it before a solve:
 
-Team defensive data in the repository is taken from the official NBA stats site (as of 6/2/25), if you'd like to update this you can replace the content in team_def_data_2425.csv by copying and pasting from here (important that it's PER GAME): https://www.nba.com/stats/teams/opponent
+```
+cd code
+python mou_ev.py
+```
 
-When you first run the code it will pull player information (Cost, Injury Status, etc) and Fixture information from the Fantasy NBA API, this also generates CSVs and you can change the setting "info_source" to be blank if you don't want to refresh these and save time.
+That writes `data/mou.csv`, which the solver reads. The gameweeks it projects
+come from `mou_gws` in settings.json (see below), so the sheet and the solve
+cover the same horizon by default.
 
-Thanks to Mou, you can now generate a dynamically updated EV sheet running the `mou_ev.py` file (just run `cd code` followed by `python mou_ev.py` and wa) to get the `mou.csv` in your data folder. To determine the horizon of the csv, simply set `gws_to_run` in the file to your liking (the days shall adjust accordingly).
+Every solve also pulls current player data from the Fantasy NBA API and
+rewrites `data/player_info.csv`, then refreshes the prices in the EV sheet from
+it, because prices move daily and the costs baked into `mou.csv` go stale as
+soon as it is a day old. Set `info_source` to blank to skip that and use the
+sheet's own prices.
+
+Scoring weights are read from the game's own API rather than hardcoded. For
+2026/27 that is 1 per point, 1 per rebound, 2 per assist, 3 per steal and 3 per
+block, with turnovers no longer scored at all.
 
 ## Settings
 You can find default settings in data/settings.json
 ### EV Settings
-**Note**:  These settings only tweak the generation of EV using the hashtag data, does not alter the mou EV.
-
 `decay`: How much EV is decayed by Game Day.
-
-`home`: Home advantage EV boost.
-
-`away`: Away disadvantage EV "boost".
 
 `value_cutoff`: Average EV Divided by Player Cost threshold to be included in solve.
 
@@ -90,7 +98,9 @@ I normally solve for 3 gameweeks at a time, which is usually 21 gamedays.
 
 `day_solve`: Choose to solve just the allstar day (True) or a normal solve ignoring that day (False).
 
-`gw_cap_used`: Needed only if setting team_data as id, set as true if gameday captain already used for the current GW.
+`chip_limits`: Caps how many of each chip the plan may use, as `{"wc": 1, "as": 0}`. Leave it as `null` and the only limits are the game's own. Either way the days in `use_wc` and `use_as` are checked against what the game actually allows before the solve starts: each chip's windows of gamedays, how many it allows per window, and which ones you have already played. An illegal plan stops the run rather than producing a solution you cannot enter.
+
+**Gameday captain**: there is no setting for this. Whether the captain has already been used this gameweek is read from the chips your entry has played (it is the `phcapt` chip, one per gameweek), so there is nothing to remember or reset.
 
 ### Solver Settings
 `num_iterations`:  The nuumber of different solutions to be generated, the criteria is controlled by `iteration_criteria`.
@@ -117,7 +127,11 @@ I normally solve for 3 gameweeks at a time, which is usually 21 gamedays.
 
 `team_id`: Your team id can be derived your points page URL or your rank history URL.
 
-`ev_sheet`: Set as true if you wish to the already created csv or have your own (ensure that it is in the data folder) or if you are using the `mou.csv`, just set it as `ev_sheet="mou"`.
+`no_team`: Set as true to solve from scratch with no starting squad (the full 100.0 budget in the bank, all 10 picks free). This is detected automatically before the first deadline of the season, so you only need the setting if you want to force a fresh build at any other point.
+
+`ev_sheet`: Which EV sheet to solve from. `"mou"` (the default, and what you get if you leave it blank) is the `mou.csv` that `mou_ev.py` writes. Set it to the name of any other csv in the data folder to use your own sheet instead; it needs `id`, `name`, `team`, `now_cost`, `element_type` and a `Gameweek X - Day Y` column per gameday.
+
+`mou_gws`: Which gameweeks `mou_ev.py` projects. `null` means the same horizon the solver is set to (`first_gw` through `final_gw`), so the two stay in step. Set a list like `[1, 2, 3]` to override.
 
 ### Output
 `print_transfer_chip_summary`: whether you want the transfer chip summary to be printed to the screen (Gameweek 2 - Day 2: Roll, Gameweek 2 - Day 3: (Wildcard) PayerA -> PlayerB, ....).

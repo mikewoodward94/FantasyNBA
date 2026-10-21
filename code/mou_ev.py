@@ -8,6 +8,7 @@ NBA Projections based on data from Dunks and Threes EPM
 # %% imports
 import pandas as pd
 
+import json
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -22,12 +23,17 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 pd.set_option("mode.chained_assignment", None)
 
-gws_to_run = [
-    17,
-    18,
-    19,
-    20,
-]  # Just set to any GW(s), it should handle the days automatically
+# Which gameweek(s) to project, from data/settings.json so the solver and the
+# EV sheet stay in step. "mou_gws": null means the solver's own horizon
+# (first_gw..final_gw); set it to a list like [1, 2, 3] to override. The days
+# within each gameweek are handled automatically.
+with open(output_dir / "settings.json") as f:
+    _settings = json.load(f)
+
+gws_to_run = _settings.get("mou_gws") or list(
+    range(_settings["first_gw"], _settings["final_gw"] + 1)
+)
+print(f"Projecting gameweeks: {gws_to_run}")
 
 
 # %% functions
