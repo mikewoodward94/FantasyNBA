@@ -8,9 +8,7 @@ NBA Projections based on data from Dunks and Threes EPM
 # %% imports
 import pandas as pd
 
-import json
 import requests
-from bs4 import BeautifulSoup
 import re
 import ast
 import urllib3
@@ -23,16 +21,16 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 pd.set_option("mode.chained_assignment", None)
 
-# Which gameweek(s) to project, from data/settings.json so the solver and the
-# EV sheet stay in step. "mou_gws": null means the solver's own horizon
-# (first_gw..final_gw); set it to a list like [1, 2, 3] to override. The days
-# within each gameweek are handled automatically.
-with open(output_dir / "settings.json") as f:
-    _settings = json.load(f)
+# Which gameweeks to project: the same horizon the solver is set to, resolved
+# from data/settings.json, so the EV sheet and the solve can never disagree
+# about what they cover. The days within each gameweek are handled
+# automatically. run_solve owns the resolution so there is one copy of it.
+from run_solve import get_static, resolve_horizon, settings  # noqa: E402
 
-gws_to_run = _settings.get("mou_gws") or list(
-    range(_settings["first_gw"], _settings["final_gw"] + 1)
+_first_gw, _, _final_gw, _ = resolve_horizon(
+    get_static(), settings["horizon"], settings.get("start"), settings.get("end")
 )
+gws_to_run = list(range(_first_gw, _final_gw + 1))
 print(f"Projecting gameweeks: {gws_to_run}")
 
 
@@ -81,21 +79,23 @@ def extract_epm_data():
         response = requests.get(url, verify=False, headers=headers)
         response.raise_for_status()  # Raise an exception for bad status codes
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching the URL: {e}")
+        raise SystemExit(f"Error fetching {url}: {e}")
 
     data = response.text
-    soup = BeautifulSoup(data, "html.parser")
-    script_tags = soup.find_all("script")
-    script_contents = []
 
-    for script in script_tags:
-        if script.string:  # Check if the script tag has content
-            script_contents.append(script.string.strip())
+    # The season label is the year the season ends in, so it moves every year.
+    # Take the latest one on the page rather than hardcoding it.
+    seasons = {int(x) for x in re.findall(r"\{season:(\d+),game_dt", data)}
+    if not seasons:
+        raise SystemExit(
+            f"Found no player records on {url}. The page layout may have "
+            "changed, so the scrape in extract_epm_data needs updating."
+        )
+    season = max(seasons)
+    print(f"Reading EPM data for season {season}")
 
-    pattern = r"\{season:2026,game_dt.*?\}"
-    matches = re.findall(pattern, data)
-    data_list = [match.strip() for match in matches]
-    return data_list
+    matches = re.findall(r"\{season:" + str(season) + r",game_dt.*?\}", data)
+    return [match.strip() for match in matches]
 
 
 def modify_strings(list_of_s):
