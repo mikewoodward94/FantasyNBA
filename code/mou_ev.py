@@ -9,7 +9,6 @@ NBA Projections based on data from Dunks and Threes EPM
 import pandas as pd
 
 import requests
-from bs4 import BeautifulSoup
 import re
 import ast
 import urllib3
@@ -80,21 +79,23 @@ def extract_epm_data():
         response = requests.get(url, verify=False, headers=headers)
         response.raise_for_status()  # Raise an exception for bad status codes
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching the URL: {e}")
+        raise SystemExit(f"Error fetching {url}: {e}")
 
     data = response.text
-    soup = BeautifulSoup(data, "html.parser")
-    script_tags = soup.find_all("script")
-    script_contents = []
 
-    for script in script_tags:
-        if script.string:  # Check if the script tag has content
-            script_contents.append(script.string.strip())
+    # The season label is the year the season ends in, so it moves every year.
+    # Take the latest one on the page rather than hardcoding it.
+    seasons = {int(x) for x in re.findall(r"\{season:(\d+),game_dt", data)}
+    if not seasons:
+        raise SystemExit(
+            f"Found no player records on {url}. The page layout may have "
+            "changed, so the scrape in extract_epm_data needs updating."
+        )
+    season = max(seasons)
+    print(f"Reading EPM data for season {season}")
 
-    pattern = r"\{season:2026,game_dt.*?\}"
-    matches = re.findall(pattern, data)
-    data_list = [match.strip() for match in matches]
-    return data_list
+    matches = re.findall(r"\{season:" + str(season) + r",game_dt.*?\}", data)
+    return [match.strip() for match in matches]
 
 
 def modify_strings(list_of_s):

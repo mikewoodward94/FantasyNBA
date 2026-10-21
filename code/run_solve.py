@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import json
 import re
+import subprocess
 import sys
 import datetime
 from tabulate import tabulate  # type: ignore
@@ -56,6 +57,7 @@ settings = load_settings()
     team_data,
     team_id,
     ev_sheet,
+    refresh_ev,
     no_team,
 ) = (
     settings["info_source"],
@@ -85,6 +87,7 @@ settings = load_settings()
     settings["team_data"],
     settings["team_id"],
     settings["ev_sheet"],
+    settings.get("refresh_ev", True),
     settings.get("no_team", False),
 )
 
@@ -355,6 +358,9 @@ def main(
     print("Chips:")
     validate_chips(static, get_chips_played(), use_wc, use_as, chip_limits)
 
+    if should_refresh_ev(ev_sheet, static, first_gw, first_gd, final_gw, final_gd):
+        run_mou_ev()
+
     player_data = read_ev_sheet(ev_sheet)
     check_ev_coverage(player_data, static, first_gw, first_gd, final_gw, final_gd)
     player_data = refresh_prices(player_data, player_info)
@@ -498,6 +504,63 @@ def get_player_info():
     elements["name"] = elements["first_name"] + " " + elements["second_name"]
     elements = elements[["id", "name", "now_cost", "team", "element_type", "status"]]
     return elements
+
+
+def is_mou_sheet(ev_sheet):
+    return not ev_sheet or str(ev_sheet).strip().lower() in ("mou", "mou.csv")
+
+
+def should_refresh_ev(ev_sheet, static, first_gw, first_gd, final_gw, final_gd):
+    mode = str(refresh_ev).strip().lower()
+
+    if mode in ("false", "none", "no", ""):
+        return False
+
+    if not is_mou_sheet(ev_sheet):
+        # your own sheet, so rebuilding mou.csv would not be what you solve
+        print(f"Not rebuilding the EV sheet: ev_sheet is {ev_sheet!r}, not mou")
+        return False
+
+    if mode != "auto":
+        return True
+
+    # "auto": only when the sheet is missing or does not reach the horizon
+    path = DATA_DIR / "mou.csv"
+    if not path.exists():
+        print("No mou.csv yet, rebuilding it")
+        return True
+    try:
+        columns = pd.read_csv(path, nrows=0, encoding="utf-8-sig").columns
+    except Exception:
+        return True
+    wanted = horizon_columns(static, first_gw, first_gd, final_gw, final_gd)
+    missing = [c for c in wanted if c not in columns]
+    if missing:
+        print(
+            f"mou.csv is missing {len(missing)} of {len(wanted)} gamedays, rebuilding"
+        )
+        return True
+    print("mou.csv already covers the horizon, keeping it")
+    return False
+
+
+def run_mou_ev():
+    """Rebuild data/mou.csv by running mou_ev.py as its own process.
+
+    It is a script rather than a module (everything happens at import), so it
+    cannot just be called, and a separate process keeps its scraping away from
+    the solve.
+    """
+    script = Path(__file__).parent / "mou_ev.py"
+    print(f"\n=== Rebuilding the EV sheet: {script.name} ===")
+    result = subprocess.run([sys.executable, str(script)], cwd=str(script.parent))
+    if result.returncode != 0:
+        raise SystemExit(
+            f"{script.name} failed with exit code {result.returncode}, so the EV "
+            "sheet was not rebuilt. Fix that, or set 'refresh_ev' to false to "
+            "solve off the existing sheet."
+        )
+    print("=== EV sheet rebuilt ===\n")
 
 
 def read_ev_sheet(ev_sheet):
@@ -695,14 +758,18 @@ def resolve_horizon(static, horizon, start=None, end=None):
     return first_gw, first_gd, final_gw, final_gd
 
 
-def check_ev_coverage(player_data, static, first_gw, first_gd, final_gw, final_gd):
+def horizon_columns(static, first_gw, first_gd, final_gw, final_gd):
     weeks, _ = read_calendar(static)
-    wanted = [
+    return [
         f"Gameweek {w} - Day {d}"
         for w in range(first_gw, final_gw + 1)
         for d in weeks.get(w, [])
         if (w, d) >= (first_gw, first_gd) and (w, d) <= (final_gw, final_gd)
     ]
+
+
+def check_ev_coverage(player_data, static, first_gw, first_gd, final_gw, final_gd):
+    wanted = horizon_columns(static, first_gw, first_gd, final_gw, final_gd)
     missing = [c for c in wanted if c not in player_data.columns]
 
     if len(missing) == len(wanted):

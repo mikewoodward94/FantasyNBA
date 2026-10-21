@@ -28,36 +28,34 @@ Please run the following to ensure that you have all prerequisite packages insta
 pip install -r requirements.txt
 ```
 ### Running the Code
-There are two things you run, both from the `code` folder:
+One command:
 
 ```
 cd code
-python mou_ev.py      # 1. build the EV projections  -> data/mou.csv
-python run_solve.py   # 2. solve your squad          -> output/*.xlsx
+python run_solve.py
 ```
 
-`mou_ev.py` is the slow one (it pulls EPM data and the injury report), so run
-it when you want fresh projections. `run_solve.py` is what you run for each
-solve; it reads the sheet `mou_ev.py` wrote. If the sheet does not cover the
-gamedays you are solving, `run_solve.py` says so and tells you to rebuild it.
+That rebuilds the EV projections and then solves, so there is nothing to run in
+order and nothing to keep in step. Solved squads land in the `output` folder as
+xlsx.
 
-`solver.py` is a library, not a script. It holds the optimisation model and is
-imported by `run_solve.py` - you never run it directly.
+`run_solve.py` is the only entry point. `mou_ev.py` builds the EV projections
+and `run_solve.py` runs it for you, though you can still run it on its own if
+you only want to refresh `data/mou.csv`. `solver.py` is a library holding the
+optimisation model, imported by `run_solve.py` - you never run it directly.
 
-Solved squads land in the `output` folder as xlsx.
+Rebuilding the projections is the slow part, because it scrapes EPM data and
+the injury report. When you are trying out solver settings rather than chasing
+fresh numbers, set `refresh_ev` to `false` (or `"auto"`) to reuse the sheet you
+already have.
 
 ## Data
-EV comes from `mou_ev.py` (thanks to Mou), which projects every player's expected points from
-Dunks and Threes EPM data plus the current injury report. Run it before a solve:
-
-```
-cd code
-python mou_ev.py
-```
-
-That writes `data/mou.csv`, which the solver reads. The gameweeks it projects
-come from `horizon` in settings.json (see below), the same setting the solver
-uses, so the sheet and the solve always cover the same gamedays.
+EV comes from `mou_ev.py` (thanks to Mou), which projects every player's
+expected points from Dunks and Threes EPM data plus the current injury report,
+and writes `data/mou.csv`. `run_solve.py` runs it for you, so you do not need
+to invoke it yourself. The gameweeks it projects come from `horizon` in
+settings.json (see below), the same setting the solver uses, so the sheet and
+the solve always cover the same gamedays.
 
 Every solve also pulls current player data from the Fantasy NBA API and
 rewrites `data/player_info.csv`, then refreshes the prices in the EV sheet from
@@ -91,6 +89,14 @@ point instead.
 
 `end`: `null` means the last day of the last gameweek in the horizon. Set it to
 a gameday like `"3_4"` to stop part way through a gameweek.
+
+`refresh_ev`: Whether `run_solve.py` rebuilds the EV projections before solving.
+`true` (the default) always rebuilds, so a solve is always on current numbers.
+`false` never does, which is what you want when you are iterating on solver
+settings and do not want to wait for the scrape. `"auto"` rebuilds only when
+`data/mou.csv` is missing or does not reach the horizon. Either way, if the
+sheet does not cover the gamedays being solved, the run tells you rather than
+quietly solving a shorter range.
 
 ### Player Settings
 `locked`: List of IDs to lock in team.

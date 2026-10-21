@@ -2,6 +2,7 @@
 "horizon": 4,
 "start": null,
 "end": null,
+"refresh_ev": true,
 
 "decay": 0.97,
 "value_cutoff": 0.2,
