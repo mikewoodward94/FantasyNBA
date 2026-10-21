@@ -32,10 +32,9 @@ settings = load_settings()
     info_source,
     value_cutoff,
     decay,
-    first_gd,
-    first_gw,
-    final_gw,
-    final_gd,
+    horizon,
+    horizon_start,
+    horizon_end,
     locked,
     banned,
     gd_banned,
@@ -62,10 +61,9 @@ settings = load_settings()
     settings["info_source"],
     settings["value_cutoff"],
     settings["decay"],
-    settings["first_gd"],
-    settings["first_gw"],
-    settings["final_gw"],
-    settings["final_gd"],
+    settings["horizon"],
+    settings.get("start"),
+    settings.get("end"),
     settings["locked"],
     settings["banned"],
     settings["gd_banned"],
@@ -312,10 +310,9 @@ def main(
     info_source,
     value_cutoff,
     decay,
-    first_gd,
-    first_gw,
-    final_gw,
-    final_gd,
+    horizon,
+    horizon_start,
+    horizon_end,
     locked,
     banned,
     gd_banned,
@@ -336,6 +333,11 @@ def main(
     weekly_hit_limit,
     ev_sheet,
 ):
+    static = get_static()
+    first_gw, first_gd, final_gw, final_gd = resolve_horizon(
+        static, horizon, horizon_start, horizon_end
+    )
+
     player_info = None
     if info_source == "API":
         print("Retrieving player data from Fantasy NBA API")
@@ -343,7 +345,7 @@ def main(
         player_info.to_csv(DATA_DIR / "player_info.csv", index=False)
 
     in_team, in_team_sell_price, cap_used, transfers_left, in_bank, current_api_gw = (
-        read_team_json()
+        read_team_json(first_gw)
     )
 
     effective_transfers_left = transfers_left
@@ -351,9 +353,10 @@ def main(
         effective_transfers_left = 2
 
     print("Chips:")
-    validate_chips(get_static(), get_chips_played(), use_wc, use_as, chip_limits)
+    validate_chips(static, get_chips_played(), use_wc, use_as, chip_limits)
 
     player_data = read_ev_sheet(ev_sheet)
+    check_ev_coverage(player_data, static, first_gw, first_gd, final_gw, final_gd)
     player_data = refresh_prices(player_data, player_info)
 
     pt_cols = [c for c in player_data.columns if c.startswith("Gameweek")]
@@ -592,14 +595,128 @@ def squad_total_spend(static=None):
     return static.get("game_settings", {}).get("squad_total_spend", 1000)
 
 
-def event_ids_by_day(static):
-    # "2_3" (gameweek 2, day 3) -> the gameday number the API uses for chips
+def read_calendar(static):
+    """The season's gamedays, as {gameweek: [day, ...]} and {"2_3": gameday}.
+
+    The gameday number is what the API calls an "event" and what chip windows
+    are expressed in; the gameweek/day pair is what the settings and EV sheets
+    use.
+    """
+    weeks = {}
     events = {}
     for e in static.get("events", []):
         nums = re.findall(r"(\d+)", e.get("name", ""))
         if len(nums) >= 2:
-            events[f"{int(nums[0])}_{int(nums[1])}"] = e["id"]
-    return events
+            week, day = int(nums[0]), int(nums[1])
+            weeks.setdefault(week, []).append(day)
+            events[f"{week}_{day}"] = e["id"]
+    return {w: sorted(d) for w, d in weeks.items()}, events
+
+
+def event_ids_by_day(static):
+    return read_calendar(static)[1]
+
+
+def next_gameday(static):
+    """The gameweek and day of the next deadline."""
+    for flag in ("is_next", "is_current"):
+        event = next((x for x in static.get("events", []) if x.get(flag)), None)
+        if event:
+            nums = re.findall(r"(\d+)", event.get("name", ""))
+            if len(nums) >= 2:
+                return int(nums[0]), int(nums[1])
+    return 1, 1
+
+
+def parse_day(value, label):
+    if not value:
+        return None
+    parts = str(value).strip().split("_")
+    if len(parts) != 2 or not all(p.isdigit() for p in parts):
+        raise ValueError(
+            f'{label} must look like "2_3" for gameweek 2 day 3, got {value!r}'
+        )
+    return int(parts[0]), int(parts[1])
+
+
+def resolve_horizon(static, horizon, start=None, end=None):
+    """Turn "horizon": 3 into the range of gamedays to solve.
+
+    The horizon counts gameweeks including whatever is left of the current one,
+    so 3 on gameweek 1 day 2 runs to the end of gameweek 3. "start" and "end"
+    override either edge when you want to plan from or to a specific gameday.
+    """
+    weeks, _ = read_calendar(static)
+    if not weeks:
+        raise ValueError("Could not read the gameweek calendar from the API")
+
+    first_gw, first_gd = parse_day(start, "start") or next_gameday(static)
+
+    try:
+        horizon = int(horizon)
+    except (TypeError, ValueError):
+        raise ValueError(f"horizon must be a number of gameweeks, got {horizon!r}")
+    if horizon < 1:
+        raise ValueError(f"horizon must be at least 1, got {horizon}")
+
+    if end:
+        final_gw, final_gd = parse_day(end, "end")
+    else:
+        final_gw = min(first_gw + horizon - 1, max(weeks))
+        final_gd = max(weeks.get(final_gw, [1]))
+
+    for label, (week, day) in (
+        ("start", (first_gw, first_gd)),
+        ("end", (final_gw, final_gd)),
+    ):
+        if week not in weeks:
+            raise ValueError(f"{label}: gameweek {week} is not in this season")
+        if day not in weeks[week]:
+            raise ValueError(
+                f"{label}: gameweek {week} has days "
+                f"{min(weeks[week])}-{max(weeks[week])}, not day {day}"
+            )
+    if (final_gw, final_gd) < (first_gw, first_gd):
+        raise ValueError(
+            f"end (GW{final_gw} Day{final_gd}) is before "
+            f"start (GW{first_gw} Day{first_gd})"
+        )
+
+    days = [
+        (w, d)
+        for w in range(first_gw, final_gw + 1)
+        for d in weeks[w]
+        if (w, d) >= (first_gw, first_gd) and (w, d) <= (final_gw, final_gd)
+    ]
+    print(
+        f"Horizon: Gameweek {first_gw} Day {first_gd} -> Gameweek {final_gw} "
+        f"Day {final_gd} ({final_gw - first_gw + 1} gameweeks, {len(days)} gamedays)"
+    )
+    return first_gw, first_gd, final_gw, final_gd
+
+
+def check_ev_coverage(player_data, static, first_gw, first_gd, final_gw, final_gd):
+    weeks, _ = read_calendar(static)
+    wanted = [
+        f"Gameweek {w} - Day {d}"
+        for w in range(first_gw, final_gw + 1)
+        for d in weeks.get(w, [])
+        if (w, d) >= (first_gw, first_gd) and (w, d) <= (final_gw, final_gd)
+    ]
+    missing = [c for c in wanted if c not in player_data.columns]
+
+    if len(missing) == len(wanted):
+        raise ValueError(
+            f"The EV sheet has no columns for the horizon ({wanted[0]} to "
+            f"{wanted[-1]}). Run 'python mou_ev.py' to rebuild it."
+        )
+    if missing:
+        print(
+            f"Warning: the EV sheet is missing {len(missing)} of {len(wanted)} "
+            f"gamedays in the horizon ({', '.join(missing[:3])}"
+            f"{'...' if len(missing) > 3 else ''}). Those days will be skipped - "
+            "run 'python mou_ev.py' to rebuild it."
+        )
 
 
 def get_chips_played():
@@ -728,8 +845,8 @@ def fresh_squad(current_gw, static=None):
     return ([], [], False, 2, budget, current_gw)
 
 
-def read_team_json():
-    current_gw = first_gw
+def read_team_json(fallback_gw):
+    current_gw = fallback_gw
 
     if no_team:
         return fresh_squad(current_gw)
@@ -877,10 +994,9 @@ if __name__ == "__main__":
         info_source,
         value_cutoff,
         decay,
-        first_gd,
-        first_gw,
-        final_gw,
-        final_gd,
+        horizon,
+        horizon_start,
+        horizon_end,
         locked,
         banned,
         gd_banned,

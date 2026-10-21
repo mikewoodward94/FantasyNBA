@@ -28,18 +28,23 @@ Please run the following to ensure that you have all prerequisite packages insta
 pip install -r requirements.txt
 ```
 ### Running the Code
+There are two things you run, both from the `code` folder:
 
-After you've done this navigate to the `code` folder: 
 ```
 cd code
+python mou_ev.py      # 1. build the EV projections  -> data/mou.csv
+python run_solve.py   # 2. solve your squad          -> output/*.xlsx
 ```
-and run run_solve.py: 
-```
-python run_solve.py
-```
-and it *should* all work.
 
-Solved csvs can be found in the `output` folder following a successful run.
+`mou_ev.py` is the slow one (it pulls EPM data and the injury report), so run
+it when you want fresh projections. `run_solve.py` is what you run for each
+solve; it reads the sheet `mou_ev.py` wrote. If the sheet does not cover the
+gamedays you are solving, `run_solve.py` says so and tells you to rebuild it.
+
+`solver.py` is a library, not a script. It holds the optimisation model and is
+imported by `run_solve.py` - you never run it directly.
+
+Solved squads land in the `output` folder as xlsx.
 
 ## Data
 EV comes from `mou_ev.py` (thanks to Mou), which projects every player's expected points from
@@ -51,8 +56,8 @@ python mou_ev.py
 ```
 
 That writes `data/mou.csv`, which the solver reads. The gameweeks it projects
-come from `mou_gws` in settings.json (see below), so the sheet and the solve
-cover the same horizon by default.
+come from `horizon` in settings.json (see below), the same setting the solver
+uses, so the sheet and the solve always cover the same gamedays.
 
 Every solve also pulls current player data from the Fantasy NBA API and
 rewrites `data/player_info.csv`, then refreshes the prices in the EV sheet from
@@ -73,10 +78,19 @@ You can find default settings in data/settings.json
 
 `transfer_penalty`: Dictionary of EV penalty applied if transfer occurs on that Gameday.
 
-### Gameday Range
-Here you set the range of gamedays that you would like to solve between (inclusive).
+### Horizon
+`horizon`: How many gameweeks to solve, counting whatever is left of the
+current one. `3` on gameweek 1 day 2 means gameweek 1 day 2 through the end of
+gameweek 3. This is normally the only thing you change between solves, and it
+sets the range for both `mou_ev.py` and `run_solve.py`, so the EV sheet and the
+solve always cover the same gamedays. It clamps at the end of the season.
 
-I normally solve for 3 gameweeks at a time, which is usually 21 gamedays.
+`start`: `null` means the next deadline, which is what you want almost always.
+Set it to a gameday like `"2_3"` (gameweek 2, day 3) to plan from a specific
+point instead.
+
+`end`: `null` means the last day of the last gameweek in the horizon. Set it to
+a gameday like `"3_4"` to stop part way through a gameweek.
 
 ### Player Settings
 `locked`: List of IDs to lock in team.
@@ -130,8 +144,6 @@ I normally solve for 3 gameweeks at a time, which is usually 21 gamedays.
 `no_team`: Set as true to solve from scratch with no starting squad (the full 100.0 budget in the bank, all 10 picks free). This is detected automatically before the first deadline of the season, so you only need the setting if you want to force a fresh build at any other point.
 
 `ev_sheet`: Which EV sheet to solve from. `"mou"` (the default, and what you get if you leave it blank) is the `mou.csv` that `mou_ev.py` writes. Set it to the name of any other csv in the data folder to use your own sheet instead; it needs `id`, `name`, `team`, `now_cost`, `element_type` and a `Gameweek X - Day Y` column per gameday.
-
-`mou_gws`: Which gameweeks `mou_ev.py` projects. `null` means the same horizon the solver is set to (`first_gw` through `final_gw`), so the two stay in step. Set a list like `[1, 2, 3]` to override.
 
 ### Output
 `print_transfer_chip_summary`: whether you want the transfer chip summary to be printed to the screen (Gameweek 2 - Day 2: Roll, Gameweek 2 - Day 3: (Wildcard) PayerA -> PlayerB, ....).
