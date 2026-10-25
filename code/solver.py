@@ -99,8 +99,8 @@ def nba_solver(
     week_day_list = []
     week_day_dict = {}
     for col in point_columns:
-        week = int(re.findall("(\d+)", col)[0])
-        day = int(re.findall("(\d+)", col)[1])
+        week = int(re.findall(r"(\d+)", col)[0])
+        day = int(re.findall(r"(\d+)", col)[1])
         temp_list = [week, day]
         week_day_list.append(temp_list)
 

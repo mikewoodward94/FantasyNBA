@@ -9,6 +9,7 @@ NBA Projections based on data from Dunks and Threes EPM
 import pandas as pd
 
 import requests
+import unicodedata
 import re
 import ast
 import urllib3
@@ -171,6 +172,29 @@ def mins_adjustment(full):
         adjusted.append(outfielders)
     adjusted = pd.concat(adjusted)
     return adjusted
+
+
+INJURY_MULTIPLIER = {
+    "out": 0.0,
+    "doubtful": 0.25,
+    "questionable": 0.55,
+    "probable": 0.9,
+    "day-to-day": 0.75,
+}
+
+SUFFIXES = {"jr", "sr", "ii", "iii", "iv", "v"}
+
+
+def normalise_name(name):
+    """A spelling-insensitive key for matching a player across two sources."""
+    text = unicodedata.normalize("NFKD", str(name))
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    text = text.lower()
+    for ch in ("'", ".", chr(8217)):
+        text = text.replace(ch, "")
+    text = re.sub(r"[^a-z ]", " ", text)
+    parts = [w for w in text.split() if w not in SUFFIXES]
+    return " ".join(parts)
 
 
 def injury_status():
@@ -429,8 +453,19 @@ injury_report = injury_status()
 injury_report[["Status", "Type"]] = injury_report["Status"].str.split("(", expand=True)
 injury_report["Type"] = injury_report["Type"].str.replace(")", "")
 injury_report = injury_report[injury_report["Type"] != "Rest"]
-injury_report["injury"] = 0.0
-injury_report.loc[injury_report["Status"] == "Day-To-Day ", "injury"] = 0.75
+injury_report["Status"] = injury_report["Status"].astype(str).str.strip()
+
+# How much of a player's minutes to keep per listed status. The report uses
+# Out / Doubtful / Questionable / Probable, so defaulting everyone who appears
+# on it to zero takes out players who are likely to feature: a Probable is
+# nearly certain to play. An unrecognised status keeps the minutes rather than
+# silently removing the player.
+injury_report["injury"] = (
+    injury_report["Status"].str.lower().map(INJURY_MULTIPLIER).fillna(1.0)
+)
+print("Injury report:")
+for status, group in injury_report.groupby("Status"):
+    print(f"  {status}: {len(group)} players, minutes x {group['injury'].iloc[0]}")
 
 player_data = pd.DataFrame(player_data)
 player_data = player_data[
@@ -488,10 +523,24 @@ player_data["player_name"] = player_data["player_name"].str.replace("Ã´", "o")
 player_data["player_name"] = player_data["player_name"].str.replace("Ã«", "e")
 
 # %% adjust player minutes to 240 per team
+# Match on a normalised name. The two sources spell players differently -
+# accents ("Jusuf Nurkic" vs "Nurkic"), suffixes ("Jimmy Butler" vs
+# "Jimmy Butler III"), apostrophes - and an unmatched name falls through to
+# "fully fit", which quietly projects an injured player at full minutes.
+player_data["match_key"] = player_data["player_name"].map(normalise_name)
+injury_report["match_key"] = injury_report["Player"].map(normalise_name)
+
+matched = injury_report["match_key"].isin(set(player_data["match_key"]))
+if (~matched).any():
+    print(
+        f"Warning: {int((~matched).sum())} injured player(s) could not be matched "
+        "to the projections, so they are treated as fit: "
+        + ", ".join(injury_report.loc[~matched, "Player"].head(8))
+    )
+
 player_data = player_data.merge(
-    injury_report[["Player", "injury"]],
-    left_on="player_name",
-    right_on="Player",
+    injury_report[["match_key", "injury"]].drop_duplicates("match_key"),
+    on="match_key",
     how="left",
 )
 player_data["injury"] = player_data["injury"].fillna(1)
