@@ -174,6 +174,14 @@ def mins_adjustment(full):
     return adjusted
 
 
+# How many games of the EPM projection to weigh against the minutes a player
+# has actually logged. EPM regularises toward a prior, so for anyone whose role
+# changed, or who has no track record, it can project a rotation that is not
+# happening: early this season it had Rayan Rupert at 33.6 minutes a game off a
+# 61.6% start rate while he had played 0 minutes in 3 games. Lower this to lean
+# harder on what has actually happened, raise it to trust the projection.
+PROJECTION_PRIOR_GAMES = 1
+
 INJURY_MULTIPLIER = {
     "out": 0.0,
     "doubtful": 0.25,
@@ -195,6 +203,43 @@ def normalise_name(name):
     text = re.sub(r"[^a-z ]", " ", text)
     parts = [w for w in text.split() if w not in SUFFIXES]
     return " ".join(parts)
+
+
+def actual_minutes():
+    """Minutes each player has really logged, per game their team has played.
+
+    Counts a game they sat out as zero, which is what matters here: the
+    question is how many minutes to expect on a given gameday, not how many
+    they play when they feature.
+    """
+    static = requests.get(
+        "https://nbafantasy.nba.com/api/bootstrap-static/", verify=False
+    ).json()
+    fixtures = requests.get(
+        "https://nbafantasy.nba.com/api/fixtures/", verify=False
+    ).json()
+
+    played = {}
+    for f in fixtures:
+        if f.get("finished"):
+            for side in ("team_h", "team_a"):
+                played[f[side]] = played.get(f[side], 0) + 1
+
+    # Keyed on the player code, which is the same NBA id the projections use,
+    # so this does not depend on the two sources spelling a name alike.
+    rows = []
+    for e in static["elements"]:
+        games = played.get(e["team"], 0)
+        if not games:
+            continue
+        rows.append(
+            {
+                "player_id": e["code"],
+                "games_played": games,
+                "actual_mp": (e.get("minutes") or 0) / games,
+            }
+        )
+    return pd.DataFrame(rows).drop_duplicates("player_id")
 
 
 def injury_status():
@@ -544,6 +589,24 @@ player_data = player_data.merge(
     how="left",
 )
 player_data["injury"] = player_data["injury"].fillna(1)
+
+# Shrink the projected minutes toward the minutes actually logged. The weight
+# on the projection is fixed, so the longer the season runs the more the real
+# numbers decide it.
+actual = actual_minutes()
+player_data = player_data.merge(actual, on="player_id", how="left")
+has_actual = player_data["games_played"].notna()
+prior = float(PROJECTION_PRIOR_GAMES)
+blended = (
+    prior * player_data["p_mp_48"]
+    + player_data["games_played"] * player_data["actual_mp"]
+) / (prior + player_data["games_played"])
+player_data.loc[has_actual, "p_mp_48"] = blended[has_actual]
+print(
+    f"Blended projected minutes with actuals for {int(has_actual.sum())} players "
+    f"(projection weighted as {PROJECTION_PRIOR_GAMES} games)"
+)
+
 player_data["p_mp_48"] *= player_data["injury"]
 player_data = mins_adjustment(player_data)
 

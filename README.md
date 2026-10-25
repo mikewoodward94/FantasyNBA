@@ -63,6 +63,14 @@ it, because prices move daily and the costs baked into `mou.csv` go stale as
 soon as it is a day old. Set `info_source` to blank to skip that and use the
 sheet's own prices.
 
+Projected minutes are blended with the minutes each player has actually
+logged this season, taken from the game's own data and counting a game they sat
+out as zero. The EPM projection regularises toward a prior, so for anyone whose
+role changed or who has no track record it can project a rotation that is not
+happening. `PROJECTION_PRIOR_GAMES` at the top of `mou_ev.py` sets how many
+games the projection is worth against the real numbers - lower it to lean
+harder on what has actually happened.
+
 Scoring weights are read from the game's own API rather than hardcoded. For
 2026/27 that is 1 per point, 1 per rebound, 2 per assist, 3 per steal and 3 per
 block, with turnovers no longer scored at all.
