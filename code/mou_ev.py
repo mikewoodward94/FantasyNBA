@@ -9,7 +9,6 @@ NBA Projections based on data from Dunks and Threes EPM
 import pandas as pd
 
 import requests
-import unicodedata
 import re
 import ast
 import urllib3
@@ -182,35 +181,16 @@ def mins_adjustment(full):
 # harder on what has actually happened, raise it to trust the projection.
 PROJECTION_PRIOR_GAMES = 1
 
-INJURY_MULTIPLIER = {
-    "out": 0.0,
-    "doubtful": 0.25,
-    "questionable": 0.55,
-    "probable": 0.9,
-    "day-to-day": 0.75,
-}
 
-SUFFIXES = {"jr", "sr", "ii", "iii", "iv", "v"}
+def player_form():
+    """Availability and real minutes for every player, from the game's own data.
 
+    Both are keyed on the player code the projections also carry, so nothing
+    here depends on two sources spelling a name the same way.
 
-def normalise_name(name):
-    """A spelling-insensitive key for matching a player across two sources."""
-    text = unicodedata.normalize("NFKD", str(name))
-    text = "".join(c for c in text if not unicodedata.combining(c))
-    text = text.lower()
-    for ch in ("'", ".", chr(8217)):
-        text = text.replace(ch, "")
-    text = re.sub(r"[^a-z ]", " ", text)
-    parts = [w for w in text.split() if w not in SUFFIXES]
-    return " ".join(parts)
-
-
-def actual_minutes():
-    """Minutes each player has really logged, per game their team has played.
-
-    Counts a game they sat out as zero, which is what matters here: the
-    question is how many minutes to expect on a given gameday, not how many
-    they play when they feature.
+    Minutes count a game a player sat out as zero, which is the question that
+    matters: how many minutes to expect on a given gameday, not how many they
+    play when they feature.
     """
     static = requests.get(
         "https://nbafantasy.nba.com/api/bootstrap-static/", verify=False
@@ -225,54 +205,26 @@ def actual_minutes():
             for side in ("team_h", "team_a"):
                 played[f[side]] = played.get(f[side], 0) + 1
 
-    # Keyed on the player code, which is the same NBA id the projections use,
-    # so this does not depend on the two sources spelling a name alike.
     rows = []
     for e in static["elements"]:
         games = played.get(e["team"], 0)
         if not games:
             continue
+        # the game rates this 0-100; without a rating, trust the status flag
+        chance = e.get("chance_of_playing_next_round")
+        if chance is None:
+            available = 1.0 if e["status"] == "a" else 0.0
+        else:
+            available = chance / 100.0
         rows.append(
             {
                 "player_id": e["code"],
                 "games_played": games,
                 "actual_mp": (e.get("minutes") or 0) / games,
+                "injury": available,
             }
         )
     return pd.DataFrame(rows).drop_duplicates("player_id")
-
-
-def injury_status():
-    injuries = pd.read_html("https://sports.yahoo.com/nba/injuries/")
-    injuries = pd.concat(injuries)
-    injuries = injuries[["Player", "Pos", "Status", "Date"]]
-    injuries = injuries.dropna()
-    injuries["Player"] = injuries["Player"].str.replace("í", "i")
-    injuries["Player"] = injuries["Player"].str.replace("č", "c")
-    injuries["Player"] = injuries["Player"].str.replace("Č", "C")
-    injuries["Player"] = injuries["Player"].str.replace("ić", "ic")
-    injuries["Player"] = injuries["Player"].str.replace("ö", "o")
-    injuries["Player"] = injuries["Player"].str.replace("é", "e")
-    injuries["Player"] = injuries["Player"].str.replace("ü", "u")
-    injuries["Player"] = injuries["Player"].str.replace("ņ", "n")
-    injuries["Player"] = injuries["Player"].str.replace("ģ", "g")
-    injuries["Player"] = injuries["Player"].str.replace("ô", "o")
-    injuries["Player"] = injuries["Player"].str.replace("ū", "u")
-    injuries["Player"] = injuries["Player"].str.replace("Ş", "S")
-    injuries["Player"] = injuries["Player"].str.replace("Š", "S")
-    injuries["Player"] = injuries["Player"].str.replace("è", "e")
-    # injuries['Player'] = injuries['Player'].str.replace('P.J. Washington Jr.','P.J. Washington')
-    # injuries['Player'] = injuries['Player'].str.replace('GG Jackson II','GG Jackson')
-    # injuries['Player'] = injuries['Player'].str.replace('Xavier Tillman Sr.','Xavier Tillman')
-    # injuries['Player'] = injuries['Player'].str.replace('Jeff Dowtin Jr.','Jeff Dowtin')
-    # injuries['Player'] = injuries['Player'].str.replace('Craig Porter Jr.','Craig Porter')
-    # injuries['Player'] = injuries['Player'].str.replace('Ron Holland II','Ronald Holland II')
-    # injuries['Player'] = injuries['Player'].str.replace('Tolu Smith III','Tolu Smith')
-    # injuries['Player'] = injuries['Player'].str.replace('Trey Jemison III','Trey Jemison')
-    # injuries['Player'] = injuries['Player'].str.replace('AJ Green','A.J. Green')
-    # injuries['Player'] = injuries['Player'].str.replace('KJ Simpson','K.J. Simpson')
-    # injuries['Player'] = injuries['Player'].str.replace('KJ Martin','Kenyon Martin Jr.')
-    return injuries
 
 
 def matchup_stats(home, away, matchup, team):
@@ -494,24 +446,6 @@ player_data = extract_epm_data()
 player_data = modify_strings(player_data)
 player_data = convert_string_list_to_dict(player_data)
 
-injury_report = injury_status()
-injury_report[["Status", "Type"]] = injury_report["Status"].str.split("(", expand=True)
-injury_report["Type"] = injury_report["Type"].str.replace(")", "")
-injury_report = injury_report[injury_report["Type"] != "Rest"]
-injury_report["Status"] = injury_report["Status"].astype(str).str.strip()
-
-# How much of a player's minutes to keep per listed status. The report uses
-# Out / Doubtful / Questionable / Probable, so defaulting everyone who appears
-# on it to zero takes out players who are likely to feature: a Probable is
-# nearly certain to play. An unrecognised status keeps the minutes rather than
-# silently removing the player.
-injury_report["injury"] = (
-    injury_report["Status"].str.lower().map(INJURY_MULTIPLIER).fillna(1.0)
-)
-print("Injury report:")
-for status, group in injury_report.groupby("Status"):
-    print(f"  {status}: {len(group)} players, minutes x {group['injury'].iloc[0]}")
-
 player_data = pd.DataFrame(player_data)
 player_data = player_data[
     [
@@ -568,33 +502,13 @@ player_data["player_name"] = player_data["player_name"].str.replace("Ã´", "o")
 player_data["player_name"] = player_data["player_name"].str.replace("Ã«", "e")
 
 # %% adjust player minutes to 240 per team
-# Match on a normalised name. The two sources spell players differently -
-# accents ("Jusuf Nurkic" vs "Nurkic"), suffixes ("Jimmy Butler" vs
-# "Jimmy Butler III"), apostrophes - and an unmatched name falls through to
-# "fully fit", which quietly projects an injured player at full minutes.
-player_data["match_key"] = player_data["player_name"].map(normalise_name)
-injury_report["match_key"] = injury_report["Player"].map(normalise_name)
-
-matched = injury_report["match_key"].isin(set(player_data["match_key"]))
-if (~matched).any():
-    print(
-        f"Warning: {int((~matched).sum())} injured player(s) could not be matched "
-        "to the projections, so they are treated as fit: "
-        + ", ".join(injury_report.loc[~matched, "Player"].head(8))
-    )
-
-player_data = player_data.merge(
-    injury_report[["match_key", "injury"]].drop_duplicates("match_key"),
-    on="match_key",
-    how="left",
-)
+# Shrink the projected minutes toward the minutes actually logged, then scale
+# by how likely the player is to feature at all. The weight on the projection
+# is fixed, so the longer the season runs the more the real numbers decide it.
+form = player_form()
+player_data = player_data.merge(form, on="player_id", how="left")
 player_data["injury"] = player_data["injury"].fillna(1)
 
-# Shrink the projected minutes toward the minutes actually logged. The weight
-# on the projection is fixed, so the longer the season runs the more the real
-# numbers decide it.
-actual = actual_minutes()
-player_data = player_data.merge(actual, on="player_id", how="left")
 has_actual = player_data["games_played"].notna()
 prior = float(PROJECTION_PRIOR_GAMES)
 blended = (
@@ -603,8 +517,9 @@ blended = (
 ) / (prior + player_data["games_played"])
 player_data.loc[has_actual, "p_mp_48"] = blended[has_actual]
 print(
-    f"Blended projected minutes with actuals for {int(has_actual.sum())} players "
-    f"(projection weighted as {PROJECTION_PRIOR_GAMES} games)"
+    f"Blended minutes with actuals for {int(has_actual.sum())} players "
+    f"(projection weighted as {PROJECTION_PRIOR_GAMES} games); "
+    f"{int((player_data['injury'] < 1).sum())} players scaled down for availability"
 )
 
 player_data["p_mp_48"] *= player_data["injury"]
