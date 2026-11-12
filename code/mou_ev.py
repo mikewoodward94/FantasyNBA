@@ -182,6 +182,20 @@ def mins_adjustment(full):
 PROJECTION_PRIOR_GAMES = 1
 
 
+def gameday_dates():
+    """When each gameweek/day is played, so availability can be dated."""
+    static = requests.get(
+        "https://nbafantasy.nba.com/api/bootstrap-static/", verify=False
+    ).json()
+    out = {}
+    for e in static.get("events", []):
+        nums = re.findall("([0-9]+)", e.get("name", ""))
+        if len(nums) >= 2 and e.get("deadline_time"):
+            stamp = pd.Timestamp(e["deadline_time"]).tz_convert(None).normalize()
+            out[(int(nums[0]), int(nums[1]))] = stamp
+    return out
+
+
 def player_form():
     """Availability and real minutes for every player, from the game's own data.
 
@@ -216,12 +230,18 @@ def player_form():
             available = 1.0 if e["status"] == "a" else 0.0
         else:
             available = chance / 100.0
+        # that rating is about the next gameday, so note when they are due
+        # back and stop applying it from then on
+        back = re.search(
+            "expected back ([0-9]{4}-[0-9]{2}-[0-9]{2})", str(e.get("news") or "")
+        )
         rows.append(
             {
                 "player_id": e["code"],
                 "games_played": games,
                 "actual_mp": (e.get("minutes") or 0) / games,
                 "injury": available,
+                "return_date": pd.Timestamp(back.group(1)) if back else pd.NaT,
             }
         )
     return pd.DataFrame(rows).drop_duplicates("player_id")
@@ -522,25 +542,50 @@ print(
     f"{int((player_data['injury'] < 1).sum())} players scaled down for availability"
 )
 
-player_data["p_mp_48"] *= player_data["injury"]
-player_data = mins_adjustment(player_data)
+# Availability is dated. The game's rating describes the next gameday, so
+# applying it across a three week horizon prices a one game knock as a three
+# week absence - and then unwinds it the moment the news clears, which churns
+# the plan. It applies only up to the day each player is due back.
+base_minutes = player_data["p_mp_48"].copy()
+gd_dates = gameday_dates()
+prepared = {}
 
-player_data["adj_off"] = player_data["off"] * player_data["p_mp_48"] / 48
-player_data["adj_def"] = player_data["def"] * player_data["p_mp_48"] / 48
-player_data["adj_pace"] = player_data["p_t_poss_48"] * player_data["p_mp_48"] / 240
 
-team_strength = player_data.pivot_table(
-    values=["adj_off", "adj_def", "adj_pace"], index=["team_alias"], aggfunc="sum"
-)
-team_strength["rating"] = team_strength["adj_off"] + team_strength["adj_def"]
-team_strength = team_strength.reset_index()
+def prepare_for(day):
+    """Minutes, team strength and ratings as they stand on one gameday."""
+    back = player_data["return_date"]
+    if day is None:
+        # no date for this gameday, so keep the haircut rather than assume fit
+        still_out = pd.Series(True, index=player_data.index)
+    else:
+        still_out = back.isna() | (back > day)
+    factors = player_data["injury"].where(still_out, 1.0)
+
+    key = tuple(factors.round(3).tolist())
+    if key not in prepared:
+        day_data = player_data.copy()
+        day_data["p_mp_48"] = base_minutes * factors
+        day_data = mins_adjustment(day_data)
+        day_data["adj_off"] = day_data["off"] * day_data["p_mp_48"] / 48
+        day_data["adj_def"] = day_data["def"] * day_data["p_mp_48"] / 48
+        day_data["adj_pace"] = day_data["p_t_poss_48"] * day_data["p_mp_48"] / 240
+        strength = day_data.pivot_table(
+            values=["adj_off", "adj_def", "adj_pace"],
+            index=["team_alias"],
+            aggfunc="sum",
+        )
+        strength["rating"] = strength["adj_off"] + strength["adj_def"]
+        prepared[key] = (day_data, strength.reset_index())
+    return prepared[key]
+
 
 # %% game level projections
 # game_stats = matchup_stats('OKC', 'SAC', team_strength, df_adj.copy())
 gw_summary = []
 results_summary = [["Home", "home pts", "away pts", "Away"]]
 for f in gw_fixtures.values:
-    game_stats, result = matchup_stats(f[6], f[9], team_strength, player_data.copy())
+    day_data, day_strength = prepare_for(gd_dates.get((int(f[2]), int(f[3]))))
+    game_stats, result = matchup_stats(f[6], f[9], day_strength, day_data.copy())
     game_stats["week"] = f[2]
     game_stats["day"] = f[3]
     game_stats["week_num"] = pd.to_numeric(f[2])
@@ -549,6 +594,8 @@ for f in gw_fixtures.values:
     gw_summary.append(game_stats)
     results_summary.append(result)
     del f, game_stats, result
+
+print(f"Availability recomputed over {len(prepared)} distinct window(s) in the horizon")
 
 results_summary = pd.DataFrame(results_summary[1:], columns=results_summary[0])
 results_summary["spread"] = results_summary["home pts"] - results_summary["away pts"]
